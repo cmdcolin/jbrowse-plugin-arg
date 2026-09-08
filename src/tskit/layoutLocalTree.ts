@@ -78,7 +78,7 @@ export class LocalTreeLayout {
       const node = stack[--top]!
       preorder[count++] = node
       siblingCount = 0
-      for (let child = leftChild[node]!; child !== NULL_NODE; ) {
+      for (let child = leftChild[node]!; child !== NULL_NODE;) {
         siblings[siblingCount++] = child
         child = rightSib[child]!
       }
@@ -144,7 +144,7 @@ export class LocalTreeLayout {
     while (top > 0) {
       const node = stack[--top]!
       preorder[count++] = node
-      for (let child = leftChild[node]!; child !== NULL_NODE; ) {
+      for (let child = leftChild[node]!; child !== NULL_NODE;) {
         stack[top++] = child
         child = rightSib[child]!
       }
@@ -158,7 +158,7 @@ export class LocalTreeLayout {
       } else {
         let leaves = 0
         let sum = 0
-        for (let child = first; child !== NULL_NODE; ) {
+        for (let child = first; child !== NULL_NODE;) {
           leaves += cladeLeaves[child]!
           sum += cladeRank[child]! * cladeLeaves[child]!
           child = rightSib[child]!
@@ -190,7 +190,8 @@ export class LocalTreeLayout {
   private rightOf(a: number, b: number) {
     const { cladeRank } = this
     return (
-      cladeRank[a]! > cladeRank[b]! || (cladeRank[a]! === cladeRank[b]! && a > b)
+      cladeRank[a]! > cladeRank[b]! ||
+      (cladeRank[a]! === cladeRank[b]! && a > b)
     )
   }
 }

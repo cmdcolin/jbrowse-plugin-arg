@@ -1,5 +1,5 @@
-import { LocalTreeLayout } from './layoutLocalTree.ts'
 import { TreeIterator } from './TreeIterator.ts'
+import { LocalTreeLayout } from './layoutLocalTree.ts'
 
 import type { TreeSequenceTables } from './tables.ts'
 

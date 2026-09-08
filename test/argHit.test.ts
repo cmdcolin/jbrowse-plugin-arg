@@ -35,6 +35,7 @@ function synthetic(): ArgRegionData {
     childTime: new Float32Array([1, 0, 0, 2, 0, 0]),
     parentTime: new Float32Array([3, 1, 1, 3, 2, 2]),
     childNode: new Int32Array([4, 0, 1, 5, 2, 3]),
+    parentNode: new Int32Array([6, 4, 4, 6, 5, 5]),
     edgePop: new Int32Array([0, 0, 0, 1, 1, 1]),
     numTrees: 1,
     treesInRegion: 1,
@@ -150,6 +151,7 @@ describe('hit testing a skyline', () => {
     childTime: new Float32Array(0),
     parentTime: new Float32Array(0),
     childNode: new Int32Array(0),
+    parentNode: new Int32Array(0),
     edgePop: new Int32Array(0),
   }
 
@@ -301,7 +303,13 @@ describe('hit testing a real tree sequence', () => {
 
   test('a cursor above the deepest root hits nothing', () => {
     expect(
-      findArgHit(400, toY(realState.maxTime) - 20, [realBlock], regions, realState),
+      findArgHit(
+        400,
+        toY(realState.maxTime) - 20,
+        [realBlock],
+        regions,
+        realState,
+      ),
     ).toBeUndefined()
   })
 })

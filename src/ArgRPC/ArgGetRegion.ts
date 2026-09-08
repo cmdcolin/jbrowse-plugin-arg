@@ -1,10 +1,7 @@
 import { getAdapter } from '@jbrowse/core/data_adapters/dataAdapterCache'
 import RpcMethodType from '@jbrowse/core/pluggableElementTypes/RpcMethodType'
 
-import {
-  buildArgRegionData,
-  emptyArgRegionData,
-} from './buildArgRegionData.ts'
+import { buildArgRegionData, emptyArgRegionData } from './buildArgRegionData.ts'
 
 import type ArgAdapter from '../ArgAdapter/ArgAdapter.ts'
 import type { ArgGetRegionArgs, ArgRegionData } from './rpcTypes.ts'

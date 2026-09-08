@@ -36,7 +36,11 @@ const arrayTypes: TypedArrayCtor[] = [
 export type KastoreStore = ReadonlyMap<string, KastoreArray>
 
 export function readKastore(buffer: ArrayBuffer): KastoreStore {
-  const header = new Uint8Array(buffer, 0, Math.min(HEADER_SIZE, buffer.byteLength))
+  const header = new Uint8Array(
+    buffer,
+    0,
+    Math.min(HEADER_SIZE, buffer.byteLength),
+  )
   if (header.length < HEADER_SIZE) {
     throw new Error('file is too short to be a kastore file')
   }

@@ -30,6 +30,7 @@ export interface ArgRegionData {
   childTime: Float32Array
   parentTime: Float32Array
   childNode: Int32Array
+  parentNode: Int32Array
   /** population every leaf below the edge shares, or -1 where they differ */
   edgePop: Int32Array
   numTrees: number

@@ -1,4 +1,7 @@
-import { BaseAdapter, cachedSetup } from '@jbrowse/core/data_adapters/BaseAdapter'
+import {
+  BaseAdapter,
+  cachedSetup,
+} from '@jbrowse/core/data_adapters/BaseAdapter'
 import { openLocation } from '@jbrowse/core/util/io'
 
 import { readTreeSequenceTables } from '../tskit/tables.ts'

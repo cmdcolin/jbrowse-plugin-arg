@@ -76,7 +76,9 @@ function readMetadataNames(store: KastoreStore, prefix: string): string[] {
     let name = ''
     if (to > from) {
       try {
-        const parsed: unknown = JSON.parse(decoder.decode(bytes.subarray(from, to)))
+        const parsed: unknown = JSON.parse(
+          decoder.decode(bytes.subarray(from, to)),
+        )
         if (parsed && typeof parsed === 'object' && 'name' in parsed) {
           const value = (parsed as { name: unknown }).name
           name = typeof value === 'string' ? value : ''

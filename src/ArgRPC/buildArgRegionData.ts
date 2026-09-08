@@ -1,6 +1,10 @@
+import {
+  NULL_NODE,
+  TreeIterator,
+  treeBreakpoints,
+} from '../tskit/TreeIterator.ts'
 import { globalLeafRanks } from '../tskit/globalLeafOrder.ts'
 import { LocalTreeLayout } from '../tskit/layoutLocalTree.ts'
-import { NULL_NODE, TreeIterator, treeBreakpoints } from '../tskit/TreeIterator.ts'
 
 import type { TreeSequenceTables } from '../tskit/tables.ts'
 import type { ArgRegionData } from './rpcTypes.ts'
@@ -65,9 +69,7 @@ function common(tables: TreeSequenceTables) {
   }
 }
 
-export function emptyArgRegionData(
-  tables: TreeSequenceTables,
-): ArgRegionData {
+export function emptyArgRegionData(tables: TreeSequenceTables): ArgRegionData {
   return {
     detail: 'trees',
     treeStart: new Float64Array(0),
@@ -80,6 +82,7 @@ export function emptyArgRegionData(
     childTime: EMPTY_F32,
     parentTime: EMPTY_F32,
     childNode: EMPTY_I32,
+    parentNode: EMPTY_I32,
     edgePop: EMPTY_I32,
     numTrees: 0,
     treesInRegion: 0,
@@ -155,6 +158,7 @@ export function buildArgRegionData({
       childTime: EMPTY_F32,
       parentTime: EMPTY_F32,
       childNode: EMPTY_I32,
+      parentNode: EMPTY_I32,
       edgePop: EMPTY_I32,
       numTrees,
       treesInRegion,
@@ -173,6 +177,7 @@ export function buildArgRegionData({
   const childTime = new Float32Array(capacity)
   const parentTime = new Float32Array(capacity)
   const childNode = new Int32Array(capacity)
+  const parentNode = new Int32Array(capacity)
   const edgePop = new Int32Array(capacity)
   const layout = new LocalTreeLayout(tables.numNodes, globalLeafRanks(tables))
   const { nodeTime } = tables
@@ -197,6 +202,7 @@ export function buildArgRegionData({
         childTime[written] = nodeTime[node]!
         parentTime[written] = nodeTime[parent]!
         childNode[written] = node
+        parentNode[written] = parent
         edgePop[written] = layout.cladePop[node]!
         written++
       }
@@ -220,6 +226,7 @@ export function buildArgRegionData({
     childTime: childTime.slice(0, written),
     parentTime: parentTime.slice(0, written),
     childNode: childNode.slice(0, written),
+    parentNode: parentNode.slice(0, written),
     edgePop: edgePop.slice(0, written),
     numTrees: treesInRegion,
     treesInRegion,

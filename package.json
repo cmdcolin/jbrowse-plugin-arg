@@ -1,22 +1,34 @@
 {
   "name": "jbrowse-plugin-arg",
   "version": "0.1.0",
-  "type": "module",
   "description": "Ancestral recombination graphs in JBrowse 2: tskit .trees local trees drawn along the genome, x genomic position and y node time",
   "keywords": [
+    "arg",
+    "genomics",
     "jbrowse",
     "jbrowse2",
-    "tskit",
-    "arg",
     "tree-sequence",
-    "genomics"
+    "tskit"
   ],
   "license": "Apache-2.0",
-  "main": "src/index.ts",
   "files": [
     "esm",
     "dist"
   ],
+  "type": "module",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./esm/index.d.ts",
+        "import": "./esm/index.js"
+      },
+      "./umd": "./dist/jbrowse-plugin-arg.umd.js"
+    },
+    "access": "public"
+  },
   "scripts": {
     "clean": "rimraf esm dist meta.json *.tsbuildinfo",
     "build:esm": "tsc --build tsconfig.build.json",
@@ -24,20 +36,13 @@
     "build": "pnpm run clean && pnpm run build:esm && pnpm run build:umd",
     "betabuild": "node scripts/betabuild.mjs",
     "typecheck": "tsc --noEmit",
+    "format": "oxfmt",
+    "check-format": "oxfmt --check",
     "test": "vitest run",
     "prepack": "pnpm run build"
   },
   "dependencies": {
     "@jbrowse/mobx-state-tree": "^6.5.1"
-  },
-  "peerDependencies": {
-    "@jbrowse/core": "^5.0.0-beta.4",
-    "@jbrowse/display-kit": "^5.0.0-beta.4",
-    "@jbrowse/plugin-linear-genome-view": "^5.0.0-beta.4",
-    "@jbrowse/render-core": "^5.0.0-beta.4",
-    "mobx": "^7.0.3",
-    "mobx-react": "^10.0.2",
-    "react": ">=19.0.0"
   },
   "devDependencies": {
     "@fal-works/esbuild-plugin-global-externals": "^2.1.2",
@@ -50,6 +55,7 @@
     "esbuild": "^0.28.2",
     "mobx": "^7.0.3",
     "mobx-react": "^10.0.2",
+    "oxfmt": "^0.65.0",
     "pretty-bytes": "^7.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -57,16 +63,13 @@
     "typescript": "^5.9.2",
     "vitest": "^2.1.9"
   },
-  "publishConfig": {
-    "access": "public",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "exports": {
-      ".": {
-        "types": "./esm/index.d.ts",
-        "import": "./esm/index.js"
-      },
-      "./umd": "./dist/jbrowse-plugin-arg.umd.js"
-    }
+  "peerDependencies": {
+    "@jbrowse/core": "^5.0.0-beta.4",
+    "@jbrowse/display-kit": "^5.0.0-beta.4",
+    "@jbrowse/plugin-linear-genome-view": "^5.0.0-beta.4",
+    "@jbrowse/render-core": "^5.0.0-beta.4",
+    "mobx": "^7.0.3",
+    "mobx-react": "^10.0.2",
+    "react": ">=19.0.0"
   }
 }

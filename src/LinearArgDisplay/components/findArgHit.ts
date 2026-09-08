@@ -4,6 +4,7 @@ import {
   clampBlockScissor,
 } from '@jbrowse/render-core/canvas2dUtils'
 
+import { dendrogramPx } from './argTypes.ts'
 import { timeToY } from './timeAxis.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
@@ -52,10 +53,7 @@ function distanceToSegment(
   const along =
     lengthSq === 0
       ? 0
-      : Math.min(
-          1,
-          Math.max(0, ((px - x1) * dx + (py - y1) * dy) / lengthSq),
-        )
+      : Math.min(1, Math.max(0, ((px - x1) * dx + (py - y1) * dy) / lengthSq))
   return Math.hypot(px - (x1 + along * dx), py - (y1 + along * dy))
 }
 
@@ -74,16 +72,6 @@ function treeAtBp(data: ArgRegionData, bp: number) {
 }
 
 /**
- * A node's identity within one local tree, from what the payload carries about
- * it. The packer writes a node's laid-out x and its time through the same
- * Float32Array rounding whether it appears as an edge's child or as its parent,
- * so the two spellings of one node compare equal.
- */
-function nodeKey(x: number, time: number) {
-  return `${x},${time}`
-}
-
-/**
  * Sample leaves below the child of `edge`, by rebuilding the local tree's
  * topology from its own edges: a node with no edge hanging off it is a leaf.
  */
@@ -93,9 +81,9 @@ function leavesBelow(
   to: number,
   edge: number,
 ) {
-  const below = new Map<string, number[]>()
+  const below = new Map<number, number[]>()
   for (let j = from; j < to; j++) {
-    const key = nodeKey(data.parentX[j]!, data.parentTime[j]!)
+    const key = data.parentNode[j]!
     const siblings = below.get(key)
     if (siblings) {
       siblings.push(j)
@@ -107,7 +95,7 @@ function leavesBelow(
   const pending = [edge]
   while (pending.length > 0) {
     const j = pending.pop()!
-    const children = below.get(nodeKey(data.childX[j]!, data.childTime[j]!))
+    const children = below.get(data.childNode[j]!)
     if (children) {
       pending.push(...children)
     } else {
@@ -172,7 +160,7 @@ export function findArgHit(
     pxPerLeaf,
     numSamples,
   } = state
-  const dendrogramPx = Math.max(2, numSamples * pxPerLeaf)
+  const minWidth = dendrogramPx(numSamples, pxPerLeaf)
   let best: Candidate | undefined
   let bestDistance = ARG_HIT_RADIUS_PX
   for (const block of blocks) {
@@ -203,7 +191,7 @@ export function findArgHit(
           const b = toPx(data.treeEnd[i]!)
           const left = Math.min(a, b)
           const width = Math.abs(b - a)
-          if (data.detail === 'trees' && width >= dendrogramPx) {
+          if (data.detail === 'trees' && width >= minWidth) {
             const to = data.edgeOffset[i + 1]!
             for (let j = data.edgeOffset[i]!; j < to; j++) {
               const childX = left + data.childX[j]! * width

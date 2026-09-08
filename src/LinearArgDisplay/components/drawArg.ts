@@ -3,6 +3,7 @@ import {
   forEachClippedBlock,
 } from '@jbrowse/render-core/canvas2dUtils'
 
+import { dendrogramPx } from './argTypes.ts'
 import { timeAxisTicks, timeToY } from './timeAxis.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
@@ -28,7 +29,7 @@ export function drawTreeCells(
 ) {
   const { canvasWidth, canvasHeight, treeCellColor, pxPerLeaf, numSamples } =
     state
-  const dendrogramPx = Math.max(2, numSamples * pxPerLeaf)
+  const minWidth = dendrogramPx(numSamples, pxPerLeaf)
   ctx.fillStyle = treeCellColor
   forEachClippedBlock(
     ctx,
@@ -56,8 +57,13 @@ export function drawTreeCells(
           reversed,
         )
         const width = Math.abs(b - a)
-        if (data.edgeCount[i] !== 0 && width >= dendrogramPx) {
-          ctx.fillRect(Math.min(a, b) + GUTTER_PX, 0, width - 2 * GUTTER_PX, canvasHeight)
+        if (data.edgeCount[i] !== 0 && width >= minWidth) {
+          ctx.fillRect(
+            Math.min(a, b) + GUTTER_PX,
+            0,
+            width - 2 * GUTTER_PX,
+            canvasHeight,
+          )
         }
       }
     },
@@ -118,7 +124,7 @@ export function drawArgBlocks(
     pxPerLeaf,
     numSamples,
   } = state
-  const dendrogramPx = Math.max(2, numSamples * pxPerLeaf)
+  const minWidth = dendrogramPx(numSamples, pxPerLeaf)
   forEachClippedBlock(
     ctx,
     blocks,
@@ -148,7 +154,7 @@ export function drawArgBlocks(
         }
         const from = toPx(data.treeStart[i]!)
         const to = toPx(data.treeEnd[i]!)
-        if (data.detail === 'trees' && Math.abs(to - from) >= dendrogramPx) {
+        if (data.detail === 'trees' && Math.abs(to - from) >= minWidth) {
           dendrograms++
           joined = false
           continue
@@ -176,7 +182,7 @@ export function drawArgBlocks(
       for (let i = 0; i < data.numTrees; i++) {
         const a = toPx(data.treeStart[i]!)
         const b = toPx(data.treeEnd[i]!)
-        if (Math.abs(b - a) < dendrogramPx) {
+        if (Math.abs(b - a) < minWidth) {
           continue
         }
         const to = data.edgeOffset[i + 1]!

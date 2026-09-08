@@ -1,11 +1,7 @@
 import { createCanvas2DBackend } from '@jbrowse/render-core/createRenderingBackend'
 import { Canvas2DPerRegionRenderingBackend } from '@jbrowse/render-core/perRegionRenderingBackend'
 
-import {
-  drawArgBlocks,
-  drawTimeGridlines,
-  drawTreeCells,
-} from './drawArg.ts'
+import { drawArgBlocks, drawTimeGridlines, drawTreeCells } from './drawArg.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
 import type { ArgRenderState } from './argTypes.ts'

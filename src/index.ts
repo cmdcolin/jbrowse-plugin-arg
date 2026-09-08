@@ -20,7 +20,11 @@ export default class ArgPlugin extends Plugin {
 
 export { readKastore } from './tskit/kastore.ts'
 export { readTreeSequenceTables } from './tskit/tables.ts'
-export { TreeIterator, numTrees, treeBreakpoints } from './tskit/TreeIterator.ts'
+export {
+  TreeIterator,
+  numTrees,
+  treeBreakpoints,
+} from './tskit/TreeIterator.ts'
 export { buildArgRegionData } from './ArgRPC/buildArgRegionData.ts'
 export type { TreeSequenceTables } from './tskit/tables.ts'
 export type { ArgRegionData } from './ArgRPC/rpcTypes.ts'
