@@ -4,7 +4,7 @@ Ancestral recombination graphs in JBrowse 2. Reads a [tskit](https://tskit.dev)
 tree sequence (`.trees`) and draws its local trees along the genome: **x is
 genomic position, y is node time**.
 
-![Local trees of a tree sequence drawn along the genome](img/trees.png)
+![Local trees of a simulated ARG under the SIRPA gene on hg38 chr20](img/trees.png)
 
 Inspired by [lorax](https://github.com/pratikkatte/lorax), which embeds JBrowse
 beside its own ARG viewer. This inverts that — the ARG is a JBrowse display, so
@@ -15,6 +15,33 @@ There is no server. The `.trees` format is a flat key-value store of columnar
 arrays ([kastore](https://github.com/tskit-dev/kastore)), and this plugin parses
 it in the browser, so a file behind any static URL works.
 
+## Live demos
+
+Nothing to install. Each link opens a simulated ARG — msprime, 50 haplotypes —
+placed on **hg38 chr20** next to the real RefSeq genes, because tree-sequence
+coordinates are genomic and that is the point of putting one in a genome
+browser. The genealogy is simulated; the locus is not.
+
+| view                            | what it shows                                                        | open                        |
+| ------------------------------- | -------------------------------------------------------------------- | --------------------------- |
+| chr20:1,900,000..1,920,000      | local trees as dendrograms, under SIRPA                              | [launch][arg-demo-trees]    |
+| chr20:1,850,000..2,050,000      | the same trees too narrow to draw, as a TMRCA skyline                | [launch][arg-demo-mixed]    |
+| chr20:1,000,000..11,000,000     | the whole simulated window — 15,321 local trees as one skyline       | [launch][arg-demo-skyline]  |
+
+[arg-demo-trees]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C900%2C000-1%2C920%2C000&tracks=genes%2Cchr20_arg
+[arg-demo-mixed]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C850%2C000-2%2C050%2C000&tracks=genes%2Cchr20_arg
+[arg-demo-skyline]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C000%2C000-11%2C000%2C000&tracks=genes%2Cchr20_arg
+
+**The links point at `jb2/main`, not `jb2/latest`, and they have to.** This
+plugin composes the v5 display ABI — `MultiRegionDisplayMixin` and
+`installUpload` from `@jbrowse/display-kit` and `@jbrowse/render-core` — which
+4.3.0, the current stable and what `latest` serves, does not have. On `latest`
+the config loads, the genes track draws, and the ARG track alone shows an error
+bar. Point your own deployment at a 5.0.0-beta build.
+
 ## What it draws
 
 The picture changes with zoom, without a mode switch. A tree draws its topology
@@ -22,21 +49,23 @@ once it has `pxPerLeaf` pixels per sample (2 by default) and collapses to its
 TMRCA below that, so dendrograms grow out of the skyline as you zoom in rather
 than replacing it.
 
-**Zoomed in** (the picture above) — each local tree as a dendrogram, spread
+**Zoomed in** (the picture at the top) — each local tree as a dendrogram, spread
 across the interval it spans. Recombination breaks the sequence into trees;
-neighbouring ones differ by the subtree a recombination moved. The two red
-segments there are trees too narrow to show topology.
+neighbouring ones differ by the subtree a recombination moved. The red segments
+between them are the mixture: those trees are too narrow at this width to
+separate 50 leaves, so they show as the height their root coalesces at.
 
-**Mid zoom** — the mixture. The skyline is continuous; the wide trees, the ones
-no recombination has broken up for a few hundred bases, are drawn in full.
+**Zoomed out** — no tree is wide enough any more, and what is left is the
+skyline. It is the same drawing, not a second view: the red follows exactly the
+tops of the dendrograms above.
 
-![Local trees and skyline at 8kb](img/mixed.png)
+![A TMRCA skyline over 200kb of chr20](img/mixed.png)
 
-**Whole sequence** — a TMRCA skyline. Where it dips, the sample's lineages find
-a common ancestor recently; where it spikes, deep structure survives at that
-locus.
+**The whole simulated window** — 15,321 local trees. Where the skyline dips, the
+50 sampled lineages find a common ancestor recently; where it spikes, deeper
+structure survives at that locus.
 
-![TMRCA skyline over 100kb](img/skyline.png)
+![A TMRCA skyline over the whole 10Mb window](img/skyline.png)
 
 ## Config
 
@@ -93,6 +122,17 @@ npx @jbrowse/capture --instance http://localhost:8899 \
   --config http://localhost:8899/config.json \
   --assembly sim --loc chr1:1-600 --track sim_arg -o arg.png
 ```
+
+### Publishing the demo
+
+`pnpm betabuild` gates on typecheck, tests and build, uploads the bundle to
+`demos/arg/<hash>/` (immutable) and `demos/arg/` (60-second cache), invalidates
+CloudFront, and then reads back what the CDN actually serves and compares
+digests — the failure it exists to catch is a demo config naming a URL that
+404s or serves yesterday's bundle. The demo config itself lives in the
+jbrowse-components repo at `demos/arg/config.json` and deploys with
+`scripts/deploy-demo.sh arg/config.json`; `scripts/simulate_chr20_demo.py` here
+regenerates the tree sequence behind it.
 
 ## Correctness
 

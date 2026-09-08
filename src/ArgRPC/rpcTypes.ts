@@ -16,6 +16,13 @@ export interface ArgRegionData {
   treeStart: Float64Array
   treeEnd: Float64Array
   tmrca: Float32Array
+  /**
+   * edges behind each entry, in both detail modes. Zero means no genealogy
+   * covers that stretch at all — the span outside a tree sequence's simulated
+   * or retained window — which is not the same as a tree whose root sits at
+   * time zero, and draws as nothing rather than as a line along the floor.
+   */
+  edgeCount: Uint32Array
   /** `numTrees + 1` entries; empty when `detail` is `skyline` */
   edgeOffset: Uint32Array
   childX: Float32Array

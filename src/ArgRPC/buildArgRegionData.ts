@@ -70,6 +70,7 @@ export function emptyArgRegionData(
     treeStart: new Float64Array(0),
     treeEnd: new Float64Array(0),
     tmrca: EMPTY_F32,
+    edgeCount: EMPTY_U32,
     edgeOffset: EMPTY_U32,
     childX: EMPTY_F32,
     parentX: EMPTY_F32,
@@ -117,6 +118,7 @@ export function buildArgRegionData({
     const treeStart = new Float64Array(numTrees)
     const treeEnd = new Float64Array(numTrees)
     const tmrca = new Float32Array(numTrees)
+    const edgeCount = new Uint32Array(numTrees)
     const binWidth = treesInRegion / numTrees
     let bin = 0
     let binEndTree = binWidth
@@ -126,6 +128,7 @@ export function buildArgRegionData({
       if (time > tmrca[bin]!) {
         tmrca[bin] = time
       }
+      edgeCount[bin] = edgeCount[bin]! + tree.edgeCount
       treeEnd[bin] = tree.right
       if (i + 1 >= binEndTree && bin + 1 < numTrees) {
         bin++
@@ -141,6 +144,7 @@ export function buildArgRegionData({
       treeStart,
       treeEnd,
       tmrca,
+      edgeCount,
       edgeOffset: EMPTY_U32,
       childX: EMPTY_F32,
       parentX: EMPTY_F32,
@@ -156,6 +160,7 @@ export function buildArgRegionData({
   const treeStart = new Float64Array(treesInRegion)
   const treeEnd = new Float64Array(treesInRegion)
   const tmrca = new Float32Array(treesInRegion)
+  const edgeCount = new Uint32Array(treesInRegion)
   const edgeOffset = new Uint32Array(treesInRegion + 1)
   const capacity = treesInRegion * edgesPerTree
   const childX = new Float32Array(capacity)
@@ -190,6 +195,7 @@ export function buildArgRegionData({
       }
     }
     edgeOffset[i + 1] = written
+    edgeCount[i] = written - edgeOffset[i]!
     if (!tree.next()) {
       break
     }
@@ -200,6 +206,7 @@ export function buildArgRegionData({
     treeStart,
     treeEnd,
     tmrca,
+    edgeCount,
     edgeOffset,
     childX: childX.slice(0, written),
     parentX: parentX.slice(0, written),

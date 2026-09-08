@@ -34,6 +34,8 @@ export class TreeIterator {
   left = 0
   right = 0
   index = -1
+  /** edges in the current tree; zero means no genealogy covers this span */
+  edgeCount = 0
   private insertionIndex = 0
   private removalIndex = 0
 
@@ -55,6 +57,7 @@ export class TreeIterator {
     this.rightChild.fill(NULL_NODE)
     this.leftSib.fill(NULL_NODE)
     this.rightSib.fill(NULL_NODE)
+    this.edgeCount = 0
   }
 
   private insert(edge: number) {
@@ -72,6 +75,7 @@ export class TreeIterator {
     }
     this.rightChild[p] = c
     this.rightSib[c] = NULL_NODE
+    this.edgeCount++
   }
 
   private remove(edge: number) {
@@ -93,6 +97,7 @@ export class TreeIterator {
     this.parent[c] = NULL_NODE
     this.leftSib[c] = NULL_NODE
     this.rightSib[c] = NULL_NODE
+    this.edgeCount--
   }
 
   private setBounds(left: number) {

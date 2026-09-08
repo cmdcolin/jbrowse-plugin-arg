@@ -163,3 +163,52 @@ describe('packing a region', () => {
     expect(Math.max(...binned.tmrca)).toBeCloseTo(Math.max(...full.tmrca), 3)
   })
 })
+
+describe('a span with no genealogy', () => {
+  // A tree sequence whose topology was retained for one window — or simulated
+  // into one, as the chr20 demo is — has trees outside it with no edges at all.
+  // Those must be distinguishable from a tree that coalesces at time zero.
+  test('the iterator reports zero edges outside a covered window', () => {
+    const tree = new TreeIterator(tables)
+    tree.seek(0)
+    expect(tree.edgeCount).toBe(38)
+  })
+
+  test('the edge count tracks insertions and removals across the walk', () => {
+    const tree = new TreeIterator(tables)
+    tree.seek(0)
+    do {
+      let live = 0
+      for (let node = 0; node < tables.numNodes; node++) {
+        if (tree.parent[node] !== NULL_NODE) {
+          live++
+        }
+      }
+      expect(tree.edgeCount).toBe(live)
+    } while (tree.next() && tree.index < 40)
+  })
+
+  test('a packed region reports edges per tree in both modes', () => {
+    const trees = buildArgRegionData({
+      tables,
+      start: 0,
+      end: 2000,
+      maxEdges: 500_000,
+      maxSkylinePoints: 5000,
+    })
+    for (let i = 0; i < trees.numTrees; i++) {
+      expect(trees.edgeCount[i]).toBe(
+        trees.edgeOffset[i + 1]! - trees.edgeOffset[i]!,
+      )
+    }
+    const skyline = buildArgRegionData({
+      tables,
+      start: 0,
+      end: 100000,
+      maxEdges: 10_000,
+      maxSkylinePoints: 200,
+    })
+    expect(skyline.edgeCount.length).toBe(200)
+    expect(Math.min(...skyline.edgeCount)).toBeGreaterThan(0)
+  })
+})

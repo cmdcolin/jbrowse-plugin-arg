@@ -72,6 +72,10 @@ export function drawArgBlocks(
       let joined = false
       let dendrograms = 0
       for (let i = 0; i < data.numTrees; i++) {
+        if (data.edgeCount[i] === 0) {
+          joined = false
+          continue
+        }
         const from = toPx(data.treeStart[i]!)
         const to = toPx(data.treeEnd[i]!)
         if (data.detail === 'trees' && Math.abs(to - from) >= dendrogramPx) {

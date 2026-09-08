@@ -3,15 +3,26 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Ancestral recombination graphs in JBrowse 2: tskit .trees local trees drawn along the genome, x genomic position and y node time",
-  "keywords": ["jbrowse", "jbrowse2", "tskit", "arg", "tree-sequence", "genomics"],
+  "keywords": [
+    "jbrowse",
+    "jbrowse2",
+    "tskit",
+    "arg",
+    "tree-sequence",
+    "genomics"
+  ],
   "license": "Apache-2.0",
   "main": "src/index.ts",
-  "files": ["esm", "dist"],
+  "files": [
+    "esm",
+    "dist"
+  ],
   "scripts": {
     "clean": "rimraf esm dist meta.json *.tsbuildinfo",
     "build:esm": "tsc --build tsconfig.build.json",
     "build:umd": "node esbuild.mjs",
     "build": "pnpm run clean && pnpm run build:esm && pnpm run build:umd",
+    "betabuild": "node scripts/betabuild.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepack": "pnpm run build"
@@ -51,7 +62,10 @@
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "exports": {
-      ".": { "types": "./esm/index.d.ts", "import": "./esm/index.js" },
+      ".": {
+        "types": "./esm/index.d.ts",
+        "import": "./esm/index.js"
+      },
       "./umd": "./dist/jbrowse-plugin-arg.umd.js"
     }
   }
