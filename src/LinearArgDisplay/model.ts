@@ -112,6 +112,25 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
        * coloring by population — the renderer reads the emptiness rather than
        * a second flag.
        */
+      /**
+       * Whether anything on screen is actually drawn as a tree. Every tree
+       * narrower than its leaves need is painted as a TMRCA segment in one
+       * color, so at that zoom no branch carries a population and a legend
+       * would be advertising an encoding that is not on screen.
+       */
+      get hasDendrogram() {
+        const minSpan =
+          Math.max(2, self.numSamples * getConf(self, 'pxPerLeaf')) *
+          self.view.bpPerPx
+        return [...self.rpcDataMap.values()].some(
+          data =>
+            data.detail === 'trees' &&
+            data.treeStart.some(
+              (start, i) =>
+                data.edgeCount[i]! > 0 && data.treeEnd[i]! - start >= minSpan,
+            ),
+        )
+      },
       get populationColors(): string[] {
         const colors: string[] = []
         if (getConf(self, 'colorBy') === 'population') {
@@ -128,13 +147,15 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
     }))
     .views(self => ({
       get legend() {
-        return self.samplePopulations
-          .map(id => ({
-            id,
-            name: self.populationNames[id] ?? `population ${id}`,
-            color: self.populationColors[id],
-          }))
-          .filter(entry => entry.color !== undefined)
+        return !self.hasDendrogram
+          ? []
+          : self.samplePopulations
+              .map(id => ({
+                id,
+                name: self.populationNames[id] ?? `population ${id}`,
+                color: self.populationColors[id],
+              }))
+              .filter(entry => entry.color !== undefined)
       },
     }))
     .views(self => ({
