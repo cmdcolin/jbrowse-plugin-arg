@@ -1,3 +1,4 @@
+import { globalLeafRanks } from '../tskit/globalLeafOrder.ts'
 import { LocalTreeLayout } from '../tskit/layoutLocalTree.ts'
 import { NULL_NODE, TreeIterator, treeBreakpoints } from '../tskit/TreeIterator.ts'
 
@@ -173,7 +174,7 @@ export function buildArgRegionData({
   const parentTime = new Float32Array(capacity)
   const childNode = new Int32Array(capacity)
   const edgePop = new Int32Array(capacity)
-  const layout = new LocalTreeLayout(tables.numNodes)
+  const layout = new LocalTreeLayout(tables.numNodes, globalLeafRanks(tables))
   const { nodeTime } = tables
   let written = 0
 
