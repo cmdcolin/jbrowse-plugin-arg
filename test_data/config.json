@@ -1,0 +1,45 @@
+{
+  "plugins": [
+    {
+      "name": "Arg",
+      "url": "http://localhost:8899/plugin/jbrowse-plugin-arg.umd.js"
+    }
+  ],
+  "assemblies": [
+    {
+      "name": "sim",
+      "sequence": {
+        "type": "ReferenceSequenceTrack",
+        "trackId": "sim-ref",
+        "adapter": {
+          "type": "IndexedFastaAdapter",
+          "uri": "sim.fa"
+        }
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "type": "ArgTrack",
+      "trackId": "sim_arg",
+      "name": "Simulated ARG (10 diploids, 100kb)",
+      "assemblyNames": ["sim"],
+      "adapter": {
+        "type": "ArgAdapter",
+        "treesLocation": { "uri": "small.trees", "locationType": "UriLocation" },
+        "refName": "chr1"
+      }
+    }
+  ],
+  "defaultSession": {
+    "name": "arg demo",
+    "views": [
+      {
+        "type": "LinearGenomeView",
+        "assembly": "sim",
+        "loc": "chr1:1-5000",
+        "tracks": ["sim_arg"]
+      }
+    ]
+  }
+}

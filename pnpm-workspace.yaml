@@ -1,0 +1,11 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@jbrowse/add-track-core@5.0.0-beta.4'
+  - '@jbrowse/core@5.0.0-beta.4'
+  - '@jbrowse/display-kit@5.0.0-beta.4'
+  - '@jbrowse/display-ui@5.0.0-beta.4'
+  - '@jbrowse/plugin-linear-genome-view@5.0.0-beta.4'
+  - '@jbrowse/render-core@5.0.0-beta.4'
+onlyBuiltDependencies:
+  - esbuild
