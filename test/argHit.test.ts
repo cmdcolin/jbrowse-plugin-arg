@@ -63,6 +63,7 @@ const state: ArgRenderState = {
   branchColor: '#000',
   skylineColor: '#888',
   gridlineColor: '#eee',
+  treeCellColor: '',
   populationColors: [],
   pxPerLeaf: 5,
   numSamples: 4,

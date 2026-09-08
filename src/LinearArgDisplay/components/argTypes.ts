@@ -17,6 +17,8 @@ export interface ArgRenderState {
   branchColor: string
   skylineColor: string
   gridlineColor: string
+  /** background behind one local tree; empty when trees are not separated */
+  treeCellColor: string
   /** color per population id; empty when branches are drawn one color */
   populationColors: string[]
   /** leaves need room to separate; below this a tree collapses to its TMRCA */

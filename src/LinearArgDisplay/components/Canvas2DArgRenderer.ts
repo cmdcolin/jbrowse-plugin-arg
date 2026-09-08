@@ -1,7 +1,11 @@
 import { createCanvas2DBackend } from '@jbrowse/render-core/createRenderingBackend'
 import { Canvas2DPerRegionRenderingBackend } from '@jbrowse/render-core/perRegionRenderingBackend'
 
-import { drawArgBlocks, drawTimeGridlines } from './drawArg.ts'
+import {
+  drawArgBlocks,
+  drawTimeGridlines,
+  drawTreeCells,
+} from './drawArg.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
 import type { ArgRenderState } from './argTypes.ts'
@@ -16,6 +20,9 @@ export class Canvas2DArgRenderer extends Canvas2DPerRegionRenderingBackend<
     regions: ReadonlyMap<number, ArgRegionData>,
     state: ArgRenderState,
   ) {
+    if (state.treeCellColor !== '') {
+      drawTreeCells(this.ctx, regions, blocks, state)
+    }
     drawTimeGridlines(this.ctx, state)
     drawArgBlocks(this.ctx, regions, blocks, state)
   }

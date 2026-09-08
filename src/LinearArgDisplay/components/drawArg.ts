@@ -10,6 +10,60 @@ import type { ArgRenderState } from './argTypes.ts'
 import type { Ctx2D } from '@jbrowse/core/util/paintLayer'
 import type { RenderBlock } from '@jbrowse/render-core/renderBlock'
 
+const GUTTER_PX = 2
+
+/**
+ * A faint cell behind each local tree, inset so neighbours are separated by a
+ * gutter rather than sharing an edge. Adjacent trees differ only by the subtree
+ * a recombination moved and are laid out on one leaf order, so without this
+ * they read as a single continuous drawing. Only trees drawn as dendrograms get
+ * one: a run of collapsed trees is a skyline, and one cell per pixel is a
+ * moire.
+ */
+export function drawTreeCells(
+  ctx: Ctx2D,
+  regions: ReadonlyMap<number, ArgRegionData>,
+  blocks: RenderBlock[],
+  state: ArgRenderState,
+) {
+  const { canvasWidth, canvasHeight, treeCellColor, pxPerLeaf, numSamples } =
+    state
+  const dendrogramPx = Math.max(2, numSamples * pxPerLeaf)
+  ctx.fillStyle = treeCellColor
+  forEachClippedBlock(
+    ctx,
+    blocks,
+    canvasWidth,
+    canvasHeight,
+    block => regions.get(block.displayedRegionIndex),
+    (data, block) => {
+      const { start, end, screenStartPx, screenEndPx, reversed } = block
+      for (let i = 0; i < data.numTrees; i++) {
+        const a = bpToScreenPx(
+          data.treeStart[i]!,
+          start,
+          end,
+          screenStartPx,
+          screenEndPx,
+          reversed,
+        )
+        const b = bpToScreenPx(
+          data.treeEnd[i]!,
+          start,
+          end,
+          screenStartPx,
+          screenEndPx,
+          reversed,
+        )
+        const width = Math.abs(b - a)
+        if (data.edgeCount[i] !== 0 && width >= dendrogramPx) {
+          ctx.fillRect(Math.min(a, b) + GUTTER_PX, 0, width - 2 * GUTTER_PX, canvasHeight)
+        }
+      }
+    },
+  )
+}
+
 export function drawTimeGridlines(ctx: Ctx2D, state: ArgRenderState) {
   const { canvasWidth, canvasHeight, maxTime, timeScale, gridlineColor } = state
   ctx.strokeStyle = gridlineColor

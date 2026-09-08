@@ -76,6 +76,24 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
+     * neighbouring local trees look alike once they share a leaf order, so
+     * each gets its own faint cell with a gutter between them
+     */
+    separateTrees: {
+      type: 'boolean',
+      defaultValue: true,
+      description: 'give each local tree its own background cell',
+    },
+    /**
+     * #slot
+     */
+    treeCellColor: {
+      type: 'color',
+      defaultValue: '#e9eef5',
+      description: 'background behind a single local tree',
+    },
+    /**
+     * #slot
      */
     gridlineColor: {
       type: 'color',
