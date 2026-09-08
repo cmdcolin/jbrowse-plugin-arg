@@ -15,12 +15,10 @@ There is no server. The `.trees` format is a flat key-value store of columnar
 arrays ([kastore](https://github.com/tskit-dev/kastore)), and this plugin parses
 it in the browser, so a file behind any static URL works.
 
-## Live demos
+## Live demo
 
-Nothing to install.
-
-**Real data.** An inferred human genealogy at *PRNP* on hg38 chr20 — 23 1000
-Genomes individuals across six populations plus a Vindija Neanderthal and a
+Nothing to install. An inferred human genealogy at *PRNP* on hg38 chr20 — 23
+1000 Genomes individuals across six populations plus a Vindija Neanderthal and a
 Denisovan, 50 haplotypes — cut out of the [unified genealogy of modern and
 ancient genomes](https://zenodo.org/records/5512994) (Wohns et al. 2022,
 `tsinfer` + `tsdate`, GRCh38). Branches are colored by the population every leaf
@@ -28,28 +26,19 @@ under them belongs to, and the track below is the 1000 Genomes genotype matrix
 for **the same individuals**, so an allele pattern and the clade that carries it
 are stacked on one screen.
 
-| view                       | what it shows                                                | open                          |
-| -------------------------- | ------------------------------------------------------------ | ----------------------------- |
-| chr20:4,689,000..4,693,000 | local trees at PRNP, over the matching genotype matrix       | [launch][arg-demo-prnp]       |
-| chr20:4,200,000..5,200,000 | the same 1 Mb as a TMRCA skyline                             | [launch][arg-demo-prnp-wide]  |
-
-**Simulated.** An msprime coalescent, 50 haplotypes over 10 Mb of chr20, useful
-because it has no inference in it — every coalescence is one the simulator
-actually made.
-
-| view                        | what it shows                                            | open                       |
-| --------------------------- | -------------------------------------------------------- | -------------------------- |
-| chr20:1,900,000..1,920,000  | local trees as dendrograms, under SIRPA                  | [launch][arg-demo-trees]   |
-| chr20:1,000,000..11,000,000 | 15,321 local trees as one skyline                        | [launch][arg-demo-skyline] |
+| view                       | what it shows                                          | open                         |
+| -------------------------- | ------------------------------------------------------- | ---------------------------- |
+| chr20:4,689,000..4,693,000 | local trees at PRNP, over the matching genotype matrix | [launch][arg-demo-prnp]      |
+| chr20:4,200,000..5,200,000 | the surrounding 1 Mb as a TMRCA skyline                | [launch][arg-demo-prnp-wide] |
 
 [arg-demo-prnp]:
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A4%2C689%2C000-4%2C693%2C000&tracks=genes%2Cprnp_arg%2Cprnp_variants
 [arg-demo-prnp-wide]:
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A4%2C200%2C000-5%2C200%2C000&tracks=genes%2Cprnp_arg%2Cprnp_variants
-[arg-demo-trees]:
-  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C900%2C000-1%2C920%2C000&tracks=genes%2Cchr20_arg
-[arg-demo-skyline]:
-  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C000%2C000-11%2C000%2C000&tracks=genes%2Cchr20_arg
+
+There is a simulated dataset too — an msprime coalescent with no inference
+between it and the truth, which is the one thing the real data cannot offer.
+It has its own page: [docs/simulated.md](docs/simulated.md).
 
 **The links point at `jb2/main`, not `jb2/latest`, and they have to.** This
 plugin composes the v5 display ABI — `MultiRegionDisplayMixin` and
@@ -67,21 +56,13 @@ than replacing it.
 
 **Zoomed in** (the picture at the top) — each local tree as a dendrogram, spread
 across the interval it spans. Recombination breaks the sequence into trees;
-neighbouring ones differ by the subtree a recombination moved. The red segments
-between them are the mixture: those trees are too narrow at this width to
-separate 50 leaves, so they show as the height their root coalesces at.
+neighbouring ones differ by the subtree a recombination moved.
 
 **Zoomed out** — no tree is wide enough any more, and what is left is the
 skyline. It is the same drawing, not a second view: the red follows exactly the
-tops of the dendrograms above.
+tops of the dendrograms above. Here it runs across the prion gene cluster.
 
-![A TMRCA skyline over 200kb of chr20](img/mixed.png)
-
-**The whole simulated window** — 15,321 local trees. Where the skyline dips, the
-50 sampled lineages find a common ancestor recently; where it spikes, deeper
-structure survives at that locus.
-
-![A TMRCA skyline over the whole 10Mb window](img/skyline.png)
+![A TMRCA skyline over 1 Mb around PRNP](img/prnp-skyline.png)
 
 ## Config
 
@@ -90,7 +71,7 @@ structure survives at that locus.
   "type": "ArgTrack",
   "trackId": "my_arg",
   "name": "Ancestral recombination graph",
-  "assemblyNames": ["sim"],
+  "assemblyNames": ["hg38"],
   "adapter": {
     "type": "ArgAdapter",
     "treesLocation": { "uri": "my.trees", "locationType": "UriLocation" },
@@ -144,7 +125,8 @@ pnpm run build     # esm/ and a UMD bundle for the plugin loader
 ```
 
 `test_data/` holds a 20-sample, 100kb msprime simulation (1144 local trees), a
-matching 100kb assembly, and a `config.json` that wires them together. To see it:
+matching 100kb assembly, and a `config.json` that wires them together — the
+offline fixture, unrelated to the deployed demos. To see it:
 
 ```bash
 pnpm run build
