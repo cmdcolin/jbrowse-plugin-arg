@@ -4,6 +4,8 @@ Ancestral recombination graphs in JBrowse 2. Reads a [tskit](https://tskit.dev)
 tree sequence (`.trees`) and draws its local trees along the genome: **x is
 genomic position, y is node time**.
 
+![Local trees of a tree sequence drawn along the genome](img/trees.png)
+
 Inspired by [lorax](https://github.com/pratikkatte/lorax), which embeds JBrowse
 beside its own ARG viewer. This inverts that — the ARG is a JBrowse display, so
 it pans and zooms with the rest of the browser and sits in a track stack next to
@@ -15,17 +17,26 @@ it in the browser, so a file behind any static URL works.
 
 ## What it draws
 
-The picture changes with zoom, without a mode switch:
+The picture changes with zoom, without a mode switch. A tree draws its topology
+once it has `pxPerLeaf` pixels per sample (2 by default) and collapses to its
+TMRCA below that, so dendrograms grow out of the skyline as you zoom in rather
+than replacing it.
 
-| zoom                          | what you see                                                                       |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| a few trees across the screen | each local tree as a dendrogram, spread across the interval it spans               |
-| trees narrower than their leaves need | those trees collapse to the height their root coalesces at             |
-| a whole chromosome            | a continuous TMRCA skyline — where it dips, lineages coalesce recently             |
+**Zoomed in** (the picture above) — each local tree as a dendrogram, spread
+across the interval it spans. Recombination breaks the sequence into trees;
+neighbouring ones differ by the subtree a recombination moved. The two red
+segments there are trees too narrow to show topology.
 
-A tree draws its topology once it has `pxPerLeaf` pixels per sample (2 by
-default), and collapses below that. So dendrograms grow out of the skyline as
-you zoom in rather than replacing it.
+**Mid zoom** — the mixture. The skyline is continuous; the wide trees, the ones
+no recombination has broken up for a few hundred bases, are drawn in full.
+
+![Local trees and skyline at 8kb](img/mixed.png)
+
+**Whole sequence** — a TMRCA skyline. Where it dips, the sample's lineages find
+a common ancestor recently; where it spikes, deep structure survives at that
+locus.
+
+![TMRCA skyline over 100kb](img/skyline.png)
 
 ## Config
 
