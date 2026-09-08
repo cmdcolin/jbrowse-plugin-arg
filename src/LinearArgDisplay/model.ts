@@ -2,12 +2,14 @@ import { ConfigurationReference, getConf } from '@jbrowse/core/configuration'
 import { BaseDisplay } from '@jbrowse/core/pluggableElementTypes/models'
 import { getContainingView } from '@jbrowse/core/util'
 import MultiRegionDisplayMixin from '@jbrowse/display-kit/MultiRegionDisplayMixin'
+import StoredHoverMixin from '@jbrowse/display-kit/StoredHoverMixin'
 import TrackHeightMixin from '@jbrowse/display-kit/TrackHeightMixin'
 import { fetchEachRegion } from '@jbrowse/display-kit/fetchEachRegion'
 import { types } from '@jbrowse/mobx-state-tree'
 import { installUpload } from '@jbrowse/render-core/installUpload'
 
 import { toTimeScale } from './components/argTypes.ts'
+import { findArgHit, sameArgHit } from './components/findArgHit.ts'
 import { populationColor } from './components/palette.ts'
 
 import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
@@ -15,6 +17,7 @@ import type {
   ArgRenderState,
   ArgRenderingBackend,
 } from './components/argTypes.ts'
+import type { ArgHit } from './components/findArgHit.ts'
 import type { LinearArgDisplayConfigModel } from './configSchema.ts'
 import type { Region } from '@jbrowse/core/util'
 import type { Instance } from '@jbrowse/mobx-state-tree'
@@ -32,6 +35,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
       BaseDisplay,
       TrackHeightMixin(),
       MultiRegionDisplayMixin(),
+      StoredHoverMixin<ArgHit>(sameArgHit),
       types.model({
         type: types.literal('LinearArgDisplay'),
         configuration: ConfigurationReference(configSchema),
@@ -147,6 +151,17 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           pxPerLeaf: getConf(self, 'pxPerLeaf'),
           numSamples: self.numSamples,
         }
+      },
+    }))
+    .views(self => ({
+      argHitAt(mouseX: number, mouseY: number) {
+        return findArgHit(
+          mouseX,
+          mouseY,
+          self.renderBlocks,
+          self.rpcDataMap,
+          self.renderState,
+        )
       },
     }))
     .actions(self => ({
