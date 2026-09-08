@@ -65,6 +65,17 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
+     * `population` colors a branch by the population every leaf under it
+     * belongs to, leaving the branches above a join in `branchColor`
+     */
+    colorBy: {
+      type: 'stringEnum',
+      model: types.enumeration('ArgColorBy', ['none', 'population']),
+      defaultValue: 'population',
+      description: 'what the branch color means',
+    },
+    /**
+     * #slot
      */
     gridlineColor: {
       type: 'color',

@@ -8,6 +8,7 @@ import { types } from '@jbrowse/mobx-state-tree'
 import { installUpload } from '@jbrowse/render-core/installUpload'
 
 import { toTimeScale } from './components/argTypes.ts'
+import { populationColor } from './components/palette.ts'
 
 import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
 import type {
@@ -75,6 +76,18 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
         }
         return 0
       },
+      get populationNames(): string[] {
+        for (const data of self.rpcDataMap.values()) {
+          return data.populationNames
+        }
+        return []
+      },
+      get samplePopulations(): number[] {
+        for (const data of self.rpcDataMap.values()) {
+          return data.samplePopulations
+        }
+        return []
+      },
       get timeUnits() {
         for (const data of self.rpcDataMap.values()) {
           return data.timeUnits
@@ -90,6 +103,37 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
       },
     }))
     .views(self => ({
+      /**
+       * Colors indexed by population id, and empty when the display is not
+       * coloring by population — the renderer reads the emptiness rather than
+       * a second flag.
+       */
+      get populationColors(): string[] {
+        const colors: string[] = []
+        if (getConf(self, 'colorBy') === 'population') {
+          // Indexed by population id but colored by rank among the populations
+          // that have samples: a file can declare hundreds of populations and
+          // carry twenty, and keying the palette on the id would hand two of
+          // those twenty the same hue for no reason.
+          self.samplePopulations.forEach((id, rank) => {
+            colors[id] = populationColor(rank)
+          })
+        }
+        return colors
+      },
+    }))
+    .views(self => ({
+      get legend() {
+        return self.samplePopulations
+          .map(id => ({
+            id,
+            name: self.populationNames[id] ?? `population ${id}`,
+            color: self.populationColors[id],
+          }))
+          .filter(entry => entry.color !== undefined)
+      },
+    }))
+    .views(self => ({
       get renderState(): ArgRenderState {
         return {
           canvasWidth: self.canvasWidthPx,
@@ -99,6 +143,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           branchColor: getConf(self, 'branchColor'),
           skylineColor: getConf(self, 'skylineColor'),
           gridlineColor: getConf(self, 'gridlineColor'),
+          populationColors: self.populationColors,
           pxPerLeaf: getConf(self, 'pxPerLeaf'),
           numSamples: self.numSamples,
         }

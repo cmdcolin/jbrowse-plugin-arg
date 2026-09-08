@@ -23,7 +23,11 @@ const TimeAxisLabels = observer(function TimeAxisLabels({
         color: '#666',
       }}
     >
-      <div style={{ position: 'absolute', right: 4, top: 1 }}>{timeUnits}</div>
+      {timeUnits === 'unknown' || timeUnits === '' ? null : (
+        <div style={{ position: 'absolute', left: 2, bottom: 2 }}>
+          {timeUnits}
+        </div>
+      )}
       {ticks.map(tick => (
         <div
           key={tick.time}

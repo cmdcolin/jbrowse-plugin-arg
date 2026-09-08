@@ -32,6 +32,21 @@ export function drawTimeGridlines(ctx: Ctx2D, state: ArgRenderState) {
  * narrow to show topology collapse to a TMRCA tick, and a region the worker
  * decided to send as a skyline draws as one TMRCA line.
  */
+/** which tree an edge index belongs to, by binary search over the offsets */
+function treeOfEdge(data: ArgRegionData, edge: number) {
+  let low = 0
+  let high = data.numTrees - 1
+  while (low < high) {
+    const mid = (low + high + 1) >>> 1
+    if (data.edgeOffset[mid]! <= edge) {
+      low = mid
+    } else {
+      high = mid - 1
+    }
+  }
+  return low
+}
+
 export function drawArgBlocks(
   ctx: Ctx2D,
   regions: ReadonlyMap<number, ArgRegionData>,
@@ -45,6 +60,7 @@ export function drawArgBlocks(
     timeScale,
     branchColor,
     skylineColor,
+    populationColors,
     pxPerLeaf,
     numSamples,
   } = state
@@ -97,19 +113,42 @@ export function drawArgBlocks(
         return
       }
 
-      ctx.strokeStyle = branchColor
-      ctx.beginPath()
+      // One stroke per color rather than one per edge: a path is batched, and
+      // switching strokeStyle mid-path would repaint everything drawn so far in
+      // the new color. Edges are bucketed by the population under them first,
+      // so the whole block is two passes regardless of how many populations
+      // are on screen.
+      const buckets = new Map<string, number[]>()
       for (let i = 0; i < data.numTrees; i++) {
         const a = toPx(data.treeStart[i]!)
         const b = toPx(data.treeEnd[i]!)
-        const left = Math.min(a, b)
-        const width = Math.abs(b - a)
-        if (width < dendrogramPx) {
+        if (Math.abs(b - a) < dendrogramPx) {
           continue
         }
-        const from = data.edgeOffset[i]!
         const to = data.edgeOffset[i + 1]!
-        for (let j = from; j < to; j++) {
+        for (let j = data.edgeOffset[i]!; j < to; j++) {
+          const pop = data.edgePop[j]
+          const color =
+            populationColors.length > 0 && pop !== undefined && pop >= 0
+              ? (populationColors[pop % populationColors.length] ?? branchColor)
+              : branchColor
+          const bucket = buckets.get(color)
+          if (bucket) {
+            bucket.push(j)
+          } else {
+            buckets.set(color, [j])
+          }
+        }
+      }
+      for (const [color, edges] of buckets) {
+        ctx.strokeStyle = color
+        ctx.beginPath()
+        for (const j of edges) {
+          const tree = treeOfEdge(data, j)
+          const a = toPx(data.treeStart[tree]!)
+          const b = toPx(data.treeEnd[tree]!)
+          const left = Math.min(a, b)
+          const width = Math.abs(b - a)
           const childX = left + data.childX[j]! * width
           const parentX = left + data.parentX[j]! * width
           const parentY = y(data.parentTime[j]!)
@@ -117,8 +156,8 @@ export function drawArgBlocks(
           ctx.lineTo(childX, parentY)
           ctx.lineTo(parentX, parentY)
         }
+        ctx.stroke()
       }
-      ctx.stroke()
     },
   )
 }

@@ -2,6 +2,7 @@ import DisplayChrome from '@jbrowse/display-kit/DisplayChrome'
 import { observer } from 'mobx-react'
 
 import { ArgRenderer } from './Canvas2DArgRenderer.ts'
+import PopulationLegend from './PopulationLegend.tsx'
 import TimeAxisLabels from './TimeAxisLabels.tsx'
 
 import type { LinearArgDisplayModel } from '../model.ts'
@@ -37,6 +38,7 @@ const ArgBody = observer(function ArgBody({
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
       <TimeAxisLabels model={model} />
+      <PopulationLegend model={model} />
     </div>
   )
 })

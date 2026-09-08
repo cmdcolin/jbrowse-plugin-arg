@@ -59,6 +59,8 @@ function common(tables: TreeSequenceTables) {
     maxNodeTime: tables.maxNodeTime,
     numSamples: tables.numSamples,
     timeUnits: tables.timeUnits,
+    populationNames: tables.populationNames,
+    samplePopulations: tables.samplePopulations,
   }
 }
 
@@ -77,6 +79,7 @@ export function emptyArgRegionData(
     childTime: EMPTY_F32,
     parentTime: EMPTY_F32,
     childNode: EMPTY_I32,
+    edgePop: EMPTY_I32,
     numTrees: 0,
     treesInRegion: 0,
     ...common(tables),
@@ -151,6 +154,7 @@ export function buildArgRegionData({
       childTime: EMPTY_F32,
       parentTime: EMPTY_F32,
       childNode: EMPTY_I32,
+      edgePop: EMPTY_I32,
       numTrees,
       treesInRegion,
       ...common(tables),
@@ -168,6 +172,7 @@ export function buildArgRegionData({
   const childTime = new Float32Array(capacity)
   const parentTime = new Float32Array(capacity)
   const childNode = new Int32Array(capacity)
+  const edgePop = new Int32Array(capacity)
   const layout = new LocalTreeLayout(tables.numNodes)
   const { nodeTime } = tables
   let written = 0
@@ -176,7 +181,7 @@ export function buildArgRegionData({
     treeStart[i] = tree.left
     treeEnd[i] = tree.right
     const roots = rootsOf(tree, tables)
-    layout.layout(tree, roots)
+    layout.layout(tree, roots, tables.nodePopulation)
     let treeMax = 0
     for (const root of roots) {
       treeMax = Math.max(treeMax, nodeTime[root]!)
@@ -191,6 +196,7 @@ export function buildArgRegionData({
         childTime[written] = nodeTime[node]!
         parentTime[written] = nodeTime[parent]!
         childNode[written] = node
+        edgePop[written] = layout.cladePop[node]!
         written++
       }
     }
@@ -213,6 +219,7 @@ export function buildArgRegionData({
     childTime: childTime.slice(0, written),
     parentTime: parentTime.slice(0, written),
     childNode: childNode.slice(0, written),
+    edgePop: edgePop.slice(0, written),
     numTrees: treesInRegion,
     treesInRegion,
     ...common(tables),

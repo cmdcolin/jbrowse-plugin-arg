@@ -30,12 +30,16 @@ export interface ArgRegionData {
   childTime: Float32Array
   parentTime: Float32Array
   childNode: Int32Array
+  /** population every leaf below the edge shares, or -1 where they differ */
+  edgePop: Int32Array
   numTrees: number
   /** trees in the region before any binning, so the display can say so */
   treesInRegion: number
   maxNodeTime: number
   numSamples: number
   timeUnits: string
+  populationNames: string[]
+  samplePopulations: number[]
 }
 
 export interface ArgGetRegionArgs {

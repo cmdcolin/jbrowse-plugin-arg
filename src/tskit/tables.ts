@@ -24,6 +24,10 @@ export interface TreeSequenceTables {
   mutationSite: Int32Array
   mutationNode: Int32Array
   maxNodeTime: number
+  /** one label per population id, from the population table's JSON metadata */
+  populationNames: string[]
+  /** population ids that actually have a sample, ascending */
+  samplePopulations: number[]
 }
 
 function get(store: KastoreStore, key: string): KastoreArray {
@@ -50,6 +54,40 @@ function decodeText(value: KastoreArray) {
   return new TextDecoder().decode(
     new Uint8Array(value.buffer, value.byteOffset, value.byteLength),
   )
+}
+
+/**
+ * Split a tskit ragged column — a byte blob plus an offset array — and read
+ * each row's JSON, which is where a population keeps the name worth showing.
+ * Rows that hold something else are left unnamed rather than guessed at.
+ */
+function readMetadataNames(store: KastoreStore, prefix: string): string[] {
+  const blob = store.get(`${prefix}/metadata`)
+  const offsets = store.get(`${prefix}/metadata_offset`)
+  if (!blob || !offsets) {
+    return []
+  }
+  const bytes = new Uint8Array(blob.buffer, blob.byteOffset, blob.byteLength)
+  const decoder = new TextDecoder()
+  const names: string[] = []
+  for (let i = 0; i + 1 < offsets.length; i++) {
+    const from = Number(offsets[i]!)
+    const to = Number(offsets[i + 1]!)
+    let name = ''
+    if (to > from) {
+      try {
+        const parsed: unknown = JSON.parse(decoder.decode(bytes.subarray(from, to)))
+        if (parsed && typeof parsed === 'object' && 'name' in parsed) {
+          const value = (parsed as { name: unknown }).name
+          name = typeof value === 'string' ? value : ''
+        }
+      } catch {
+        name = ''
+      }
+    }
+    names.push(name)
+  }
+  return names
 }
 
 function max(values: Float64Array) {
@@ -83,6 +121,7 @@ export function readTreeSequenceTables(
     }
   }
   const edgeParent = typed(store, 'edges/parent', Int32Array)
+  const nodePopulation = typed(store, 'nodes/population', Int32Array)
   return {
     sequenceLength,
     timeUnits: decodeText(get(store, 'time_units')),
@@ -91,7 +130,7 @@ export function readTreeSequenceTables(
     numSamples: sampleList.length,
     nodeTime,
     nodeFlags,
-    nodePopulation: typed(store, 'nodes/population', Int32Array),
+    nodePopulation,
     samples: Int32Array.from(sampleList),
     edgeLeft: typed(store, 'edges/left', Float64Array),
     edgeRight: typed(store, 'edges/right', Float64Array),
@@ -103,5 +142,11 @@ export function readTreeSequenceTables(
     mutationSite: typed(store, 'mutations/site', Int32Array),
     mutationNode: typed(store, 'mutations/node', Int32Array),
     maxNodeTime: max(nodeTime),
+    populationNames: readMetadataNames(store, 'populations'),
+    samplePopulations: [
+      ...new Set(sampleList.map(node => nodePopulation[node]!)),
+    ]
+      .filter(id => id >= 0)
+      .sort((a, b) => a - b),
   }
 }

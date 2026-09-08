@@ -4,7 +4,7 @@ Ancestral recombination graphs in JBrowse 2. Reads a [tskit](https://tskit.dev)
 tree sequence (`.trees`) and draws its local trees along the genome: **x is
 genomic position, y is node time**.
 
-![Local trees of a simulated ARG under the SIRPA gene on hg38 chr20](img/trees.png)
+![An inferred human ARG at PRNP, colored by population, above the genotypes of the same haplotypes](img/prnp.png)
 
 Inspired by [lorax](https://github.com/pratikkatte/lorax), which embeds JBrowse
 beside its own ARG viewer. This inverts that — the ARG is a JBrowse display, so
@@ -17,21 +17,37 @@ it in the browser, so a file behind any static URL works.
 
 ## Live demos
 
-Nothing to install. Each link opens a simulated ARG — msprime, 50 haplotypes —
-placed on **hg38 chr20** next to the real RefSeq genes, because tree-sequence
-coordinates are genomic and that is the point of putting one in a genome
-browser. The genealogy is simulated; the locus is not.
+Nothing to install.
 
-| view                            | what it shows                                                        | open                        |
-| ------------------------------- | -------------------------------------------------------------------- | --------------------------- |
-| chr20:1,900,000..1,920,000      | local trees as dendrograms, under SIRPA                              | [launch][arg-demo-trees]    |
-| chr20:1,850,000..2,050,000      | the same trees too narrow to draw, as a TMRCA skyline                | [launch][arg-demo-mixed]    |
-| chr20:1,000,000..11,000,000     | the whole simulated window — 15,321 local trees as one skyline       | [launch][arg-demo-skyline]  |
+**Real data.** An inferred human genealogy at *PRNP* on hg38 chr20 — 23 1000
+Genomes individuals across six populations plus a Vindija Neanderthal and a
+Denisovan, 50 haplotypes — cut out of the [unified genealogy of modern and
+ancient genomes](https://zenodo.org/records/5512994) (Wohns et al. 2022,
+`tsinfer` + `tsdate`, GRCh38). Branches are colored by the population every leaf
+under them belongs to, and the track below is the 1000 Genomes genotype matrix
+for **the same individuals**, so an allele pattern and the clade that carries it
+are stacked on one screen.
 
+| view                       | what it shows                                                | open                          |
+| -------------------------- | ------------------------------------------------------------ | ----------------------------- |
+| chr20:4,689,000..4,693,000 | local trees at PRNP, over the matching genotype matrix       | [launch][arg-demo-prnp]       |
+| chr20:4,200,000..5,200,000 | the same 1 Mb as a TMRCA skyline                             | [launch][arg-demo-prnp-wide]  |
+
+**Simulated.** An msprime coalescent, 50 haplotypes over 10 Mb of chr20, useful
+because it has no inference in it — every coalescence is one the simulator
+actually made.
+
+| view                        | what it shows                                            | open                       |
+| --------------------------- | -------------------------------------------------------- | -------------------------- |
+| chr20:1,900,000..1,920,000  | local trees as dendrograms, under SIRPA                  | [launch][arg-demo-trees]   |
+| chr20:1,000,000..11,000,000 | 15,321 local trees as one skyline                        | [launch][arg-demo-skyline] |
+
+[arg-demo-prnp]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A4%2C689%2C000-4%2C693%2C000&tracks=genes%2Cprnp_arg%2Cprnp_variants
+[arg-demo-prnp-wide]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A4%2C200%2C000-5%2C200%2C000&tracks=genes%2Cprnp_arg%2Cprnp_variants
 [arg-demo-trees]:
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C900%2C000-1%2C920%2C000&tracks=genes%2Cchr20_arg
-[arg-demo-mixed]:
-  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C850%2C000-2%2C050%2C000&tracks=genes%2Cchr20_arg
 [arg-demo-skyline]:
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C000%2C000-11%2C000%2C000&tracks=genes%2Cchr20_arg
 
@@ -39,7 +55,7 @@ browser. The genealogy is simulated; the locus is not.
 plugin composes the v5 display ABI — `MultiRegionDisplayMixin` and
 `installUpload` from `@jbrowse/display-kit` and `@jbrowse/render-core` — which
 4.3.0, the current stable and what `latest` serves, does not have. On `latest`
-the config loads, the genes track draws, and the ARG track alone shows an error
+the config loads, the other tracks draw, and the ARG track alone shows an error
 bar. Point your own deployment at a 5.0.0-beta build.
 
 ## What it draws
@@ -87,8 +103,23 @@ structure survives at that locus.
 tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
-Display slots: `branchColor`, `skylineColor`, `gridlineColor`, `timeScale`
-(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`.
+Display slots: `colorBy` (`population` or `none`), `branchColor`,
+`skylineColor`, `gridlineColor`, `timeScale` (`log` or `linear`), `pxPerLeaf`,
+`maxEdges`, `maxSkylinePoints`, `height`.
+
+## Coloring by population
+
+`colorBy: population` colors a branch by the population **every** leaf below it
+belongs to, and leaves the branches above a join in `branchColor`. So a colored
+subtree is a claim — these haplotypes coalesce before they meet anyone else —
+and the black above it is where that stops being true. The population comes from
+the tree sequence's own population table metadata, so a file with no such
+metadata simply draws one color.
+
+The palette is Okabe-Ito, keyed on the populations that actually have samples
+rather than on population id: the unified genealogy declares 215 populations and
+a 50-haplotype cut carries eight, and keying on the id would hand two of those
+eight the same hue for no reason.
 
 ## How detail is decided
 
@@ -157,6 +188,8 @@ rather than by replaying every breakpoint before it.
   decompressed. Run `tsunzip` first.
 - **No hit-testing yet** — no click or hover on a node or branch.
 - **Mutations are not drawn.** The site and mutation tables are parsed and
-  available; nothing plots them.
+  available; nothing plots them. This is the gap that would most improve the
+  demo above — a mutation drawn on the branch that carries it is the explicit
+  link between a clade in the tree and a column in the genotype matrix.
 - **Canvas2D only.** Well inside the threshold where a GPU path would earn its
   keep (~100K features/frame); the edge budget keeps a frame under that.
