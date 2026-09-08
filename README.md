@@ -85,8 +85,42 @@ tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
 Display slots: `colorBy` (`population` or `none`), `branchColor`,
-`skylineColor`, `gridlineColor`, `timeScale` (`log` or `linear`), `pxPerLeaf`,
-`maxEdges`, `maxSkylinePoints`, `height`.
+`skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
+(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`.
+
+## One leaf order for the whole sequence
+
+Neighbouring local trees differ only by the subtree a recombination moved, but
+if each lays its leaves out in its own traversal order they look unrelated and
+the row reads as noise. So a reference tree fixes a rank per sample once per
+file, and every tree then orders each node's children by the mean rank of the
+leaves beneath them. Clades stay contiguous — that is what makes a dendrogram
+readable, and rotation preserves it where sorting leaves into the global order
+outright would not — while the order comes as close to the global one as the
+topology allows.
+
+Measured over the first 400 trees, the rank correlation between adjacent trees'
+leaf orders goes from 0.65 to 0.87 on the simulation and 0.63 to 0.78 on the
+real data. The practical effect is that a sample keeps roughly the same column
+across a view, so a recombination shows up as one clade jumping rather than
+everything reshuffling.
+
+That similarity then makes the boundary between trees matter, which is what
+`separateTrees` is for: each tree drawn as a dendrogram gets a faint cell with a
+two-pixel gutter, so neighbours are separated by whitespace instead of sharing
+an edge.
+
+## Hovering
+
+Hovering a branch reports the node, its time in the file's own units, how many
+sample leaves sit below it, the population its clade shares where it has one,
+and the local tree's interval. A tree too narrow for a dendrogram was drawn as
+its TMRCA and hits as that, which is also what a skyline reports.
+
+The population legend appears only when something on screen is actually drawn
+as a tree. Every tree narrower than its leaves need is painted as one TMRCA
+segment in a single color, so at that zoom a legend would be advertising an
+encoding that is not on screen.
 
 ## Coloring by population
 
@@ -168,7 +202,6 @@ rather than by replaying every breakpoint before it.
   which is the problem lorax's backend exists to solve.
 - **`.trees.tsz` (tszip) is not supported.** Detected and reported, not
   decompressed. Run `tsunzip` first.
-- **No hit-testing yet** — no click or hover on a node or branch.
 - **Mutations are not drawn.** The site and mutation tables are parsed and
   available; nothing plots them. This is the gap that would most improve the
   demo above — a mutation drawn on the branch that carries it is the explicit

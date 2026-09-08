@@ -1,27 +1,24 @@
-import { ConfigurationReference, getConf } from '@jbrowse/core/configuration'
-import { BaseDisplay } from '@jbrowse/core/pluggableElementTypes/models'
-import { getContainingView } from '@jbrowse/core/util'
-import MultiRegionDisplayMixin from '@jbrowse/display-kit/MultiRegionDisplayMixin'
-import StoredHoverMixin from '@jbrowse/display-kit/StoredHoverMixin'
-import TrackHeightMixin from '@jbrowse/display-kit/TrackHeightMixin'
-import { fetchEachRegion } from '@jbrowse/display-kit/fetchEachRegion'
-import { types } from '@jbrowse/mobx-state-tree'
-import { installUpload } from '@jbrowse/render-core/installUpload'
+import { ConfigurationReference, getConf } from "@jbrowse/core/configuration";
+import { BaseDisplay } from "@jbrowse/core/pluggableElementTypes/models";
+import { getContainingView } from "@jbrowse/core/util";
+import MultiRegionDisplayMixin from "@jbrowse/display-kit/MultiRegionDisplayMixin";
+import StoredHoverMixin from "@jbrowse/display-kit/StoredHoverMixin";
+import TrackHeightMixin from "@jbrowse/display-kit/TrackHeightMixin";
+import { fetchEachRegion } from "@jbrowse/display-kit/fetchEachRegion";
+import { types } from "@jbrowse/mobx-state-tree";
+import { installUpload } from "@jbrowse/render-core/installUpload";
 
-import { toTimeScale } from './components/argTypes.ts'
-import { findArgHit, sameArgHit } from './components/findArgHit.ts'
-import { populationColor } from './components/palette.ts'
+import { toTimeScale } from "./components/argTypes.ts";
+import { findArgHit, sameArgHit } from "./components/findArgHit.ts";
+import { populationColor } from "./components/palette.ts";
 
-import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
-import type {
-  ArgRenderState,
-  ArgRenderingBackend,
-} from './components/argTypes.ts'
-import type { ArgHit } from './components/findArgHit.ts'
-import type { LinearArgDisplayConfigModel } from './configSchema.ts'
-import type { Region } from '@jbrowse/core/util'
-import type { Instance } from '@jbrowse/mobx-state-tree'
-import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
+import type { ArgRegionData } from "../ArgRPC/rpcTypes.ts";
+import type { ArgRenderState, ArgRenderingBackend } from "./components/argTypes.ts";
+import type { ArgHit } from "./components/findArgHit.ts";
+import type { LinearArgDisplayConfigModel } from "./configSchema.ts";
+import type { Region } from "@jbrowse/core/util";
+import type { Instance } from "@jbrowse/mobx-state-tree";
+import type { LinearGenomeViewModel } from "@jbrowse/plugin-linear-genome-view";
 
 /**
  * #stateModel LinearArgDisplay
@@ -31,31 +28,31 @@ import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
   return types
     .compose(
-      'LinearArgDisplay',
+      "LinearArgDisplay",
       BaseDisplay,
       TrackHeightMixin(),
       MultiRegionDisplayMixin(),
       StoredHoverMixin<ArgHit>(sameArgHit),
       types.model({
-        type: types.literal('LinearArgDisplay'),
+        type: types.literal("LinearArgDisplay"),
         configuration: ConfigurationReference(configSchema),
       }),
     )
-    .views(self => ({
+    .views((self) => ({
       get rpcDataMap(): ReadonlyMap<number, ArgRegionData> {
-        return self.regionPayloads as ReadonlyMap<number, ArgRegionData>
+        return self.regionPayloads as ReadonlyMap<number, ArgRegionData>;
       },
       get view() {
-        return getContainingView(self) as LinearGenomeViewModel
+        return getContainingView(self) as LinearGenomeViewModel;
       },
       rpcProps() {
         return {
-          maxEdges: getConf(self, 'maxEdges'),
-          maxSkylinePoints: getConf(self, 'maxSkylinePoints'),
-        }
+          maxEdges: getConf(self, "maxEdges"),
+          maxSkylinePoints: getConf(self, "maxSkylinePoints"),
+        };
       },
     }))
-    .views(self => ({
+    .views((self) => ({
       /**
        * The oldest node in the whole file, which every region payload carries.
        * Scaling to the file rather than to what is on screen is what keeps the
@@ -63,50 +60,50 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
        */
       get maxTime() {
         for (const data of self.rpcDataMap.values()) {
-          return data.maxNodeTime
+          return data.maxNodeTime;
         }
-        return 1
+        return 1;
       },
       /** what the fetch decided it could send, for the display's own menu */
       get detail() {
         for (const data of self.rpcDataMap.values()) {
-          return data.detail
+          return data.detail;
         }
-        return undefined
+        return undefined;
       },
       get numSamples() {
         for (const data of self.rpcDataMap.values()) {
-          return data.numSamples
+          return data.numSamples;
         }
-        return 0
+        return 0;
       },
       get populationNames(): string[] {
         for (const data of self.rpcDataMap.values()) {
-          return data.populationNames
+          return data.populationNames;
         }
-        return []
+        return [];
       },
       get samplePopulations(): number[] {
         for (const data of self.rpcDataMap.values()) {
-          return data.samplePopulations
+          return data.samplePopulations;
         }
-        return []
+        return [];
       },
       get timeUnits() {
         for (const data of self.rpcDataMap.values()) {
-          return data.timeUnits
+          return data.timeUnits;
         }
-        return ''
+        return "";
       },
       get treesInView() {
-        let total = 0
+        let total = 0;
         for (const data of self.rpcDataMap.values()) {
-          total += data.treesInRegion
+          total += data.treesInRegion;
         }
-        return total
+        return total;
       },
     }))
-    .views(self => ({
+    .views((self) => ({
       /**
        * Colors indexed by population id, and empty when the display is not
        * coloring by population — the renderer reads the emptiness rather than
@@ -120,103 +117,94 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
        */
       get hasDendrogram() {
         const minSpan =
-          Math.max(2, self.numSamples * getConf(self, 'pxPerLeaf')) *
-          self.view.bpPerPx
+          Math.max(2, self.numSamples * getConf(self, "pxPerLeaf")) * self.view.bpPerPx;
         return [...self.rpcDataMap.values()].some(
-          data =>
-            data.detail === 'trees' &&
+          (data) =>
+            data.detail === "trees" &&
             data.treeStart.some(
-              (start, i) =>
-                data.edgeCount[i]! > 0 && data.treeEnd[i]! - start >= minSpan,
+              (start, i) => data.edgeCount[i]! > 0 && data.treeEnd[i]! - start >= minSpan,
             ),
-        )
+        );
       },
       get populationColors(): string[] {
-        const colors: string[] = []
-        if (getConf(self, 'colorBy') === 'population') {
+        const colors: string[] = [];
+        // One population is not a distinction. Coloring by it would say
+        // nothing and the legend would be a single entry explaining the only
+        // color on screen.
+        if (getConf(self, "colorBy") === "population" && self.samplePopulations.length > 1) {
           // Indexed by population id but colored by rank among the populations
           // that have samples: a file can declare hundreds of populations and
           // carry twenty, and keying the palette on the id would hand two of
           // those twenty the same hue for no reason.
           self.samplePopulations.forEach((id, rank) => {
-            colors[id] = populationColor(rank)
-          })
+            colors[id] = populationColor(rank);
+          });
         }
-        return colors
+        return colors;
       },
     }))
-    .views(self => ({
+    .views((self) => ({
       get legend() {
         return !self.hasDendrogram
           ? []
           : self.samplePopulations
-              .map(id => ({
+              .map((id) => ({
                 id,
                 name: self.populationNames[id] ?? `population ${id}`,
                 color: self.populationColors[id],
               }))
-              .filter(entry => entry.color !== undefined)
+              .filter((entry) => entry.color !== undefined);
       },
     }))
-    .views(self => ({
+    .views((self) => ({
       get renderState(): ArgRenderState {
         return {
           canvasWidth: self.canvasWidthPx,
           canvasHeight: self.height,
           maxTime: self.maxTime,
-          timeScale: toTimeScale(getConf(self, 'timeScale')),
-          branchColor: getConf(self, 'branchColor'),
-          skylineColor: getConf(self, 'skylineColor'),
-          gridlineColor: getConf(self, 'gridlineColor'),
-          treeCellColor: getConf(self, 'separateTrees')
-            ? getConf(self, 'treeCellColor')
-            : '',
+          timeScale: toTimeScale(getConf(self, "timeScale")),
+          branchColor: getConf(self, "branchColor"),
+          skylineColor: getConf(self, "skylineColor"),
+          gridlineColor: getConf(self, "gridlineColor"),
+          treeCellColor: getConf(self, "separateTrees") ? getConf(self, "treeCellColor") : "",
           populationColors: self.populationColors,
-          pxPerLeaf: getConf(self, 'pxPerLeaf'),
+          pxPerLeaf: getConf(self, "pxPerLeaf"),
           numSamples: self.numSamples,
-        }
+        };
       },
     }))
-    .views(self => ({
+    .views((self) => ({
       argHitAt(mouseX: number, mouseY: number) {
-        return findArgHit(
-          mouseX,
-          mouseY,
-          self.renderBlocks,
-          self.rpcDataMap,
-          self.renderState,
-        )
+        return findArgHit(mouseX, mouseY, self.renderBlocks, self.rpcDataMap, self.renderState);
       },
     }))
-    .actions(self => ({
-      fetchNeeded(
-        needed: { region: Region; displayedRegionIndex: number }[],
-      ) {
-        const { adapterConfig } = self
+    .actions((self) => ({
+      fetchNeeded(needed: { region: Region; displayedRegionIndex: number }[]) {
+        const { adapterConfig } = self;
         return fetchEachRegion(self, needed, {
           call: (region, ctx) =>
-            ctx.callRpc('ArgGetRegion', {
+            ctx.callRpc("ArgGetRegion", {
               adapterConfig,
               region,
               ...self.rpcProps(),
             }),
           onResult: (_idx, result) => result,
-        })
+        });
       },
       startRenderingBackend(backend: ArgRenderingBackend) {
         installUpload(self, backend, {
           cells: () => self.rpcDataMap,
           render: (b, regions) => {
             if (regions.size === 0) {
-              return false
+              return false;
             }
-            b.renderBlocks(self.renderBlocks, regions, self.renderState)
-            return true
+            b.renderBlocks(self.renderBlocks, regions, self.renderState);
+            return true;
           },
-        })
+        });
       },
-    }))
+    }));
 }
 
-export type LinearArgDisplayStateModel = ReturnType<typeof modelFactory>
-export type LinearArgDisplayModel = Instance<LinearArgDisplayStateModel>
+export type LinearArgDisplayStateModel = ReturnType<typeof modelFactory>;
+export type LinearArgDisplayModel = Instance<LinearArgDisplayStateModel>;
