@@ -34,6 +34,11 @@ export interface TreeSequenceTables {
   populationNames: string[]
   /** population ids that actually have a sample, ascending */
   samplePopulations: number[]
+  /**
+   * one label per sample, in `samples` order: its individual's name and which
+   * of that individual's haplotypes it is, or the node id where unnamed
+   */
+  sampleNames: string[]
 }
 
 function get(store: KastoreStore, key: string): KastoreArray {
@@ -64,10 +69,15 @@ function decodeText(value: KastoreArray) {
 
 /**
  * Split a tskit ragged column — a byte blob plus an offset array — and read
- * each row's JSON, which is where a population keeps the name worth showing.
- * Rows that hold something else are left unnamed rather than guessed at.
+ * each row's JSON, which is where a population or an individual keeps the name
+ * worth showing: the first of `keys` holding a string. Rows that hold something
+ * else are left unnamed rather than guessed at.
  */
-function readMetadataNames(store: KastoreStore, prefix: string): string[] {
+function readMetadataNames(
+  store: KastoreStore,
+  prefix: string,
+  keys = ['name'],
+): string[] {
   const blob = store.get(`${prefix}/metadata`)
   const offsets = store.get(`${prefix}/metadata_offset`)
   if (!blob || !offsets) {
@@ -85,9 +95,10 @@ function readMetadataNames(store: KastoreStore, prefix: string): string[] {
         const parsed: unknown = JSON.parse(
           decoder.decode(bytes.subarray(from, to)),
         )
-        if (parsed && typeof parsed === 'object' && 'name' in parsed) {
-          const value = (parsed as { name: unknown }).name
-          name = typeof value === 'string' ? value : ''
+        if (parsed && typeof parsed === 'object') {
+          const record = parsed as Record<string, unknown>
+          const key = keys.find(k => typeof record[k] === 'string')
+          name = key === undefined ? '' : (record[key] as string)
         }
       } catch {
         name = ''
@@ -126,6 +137,28 @@ function siteOffsets(mutationSite: Int32Array, numSites: number) {
     offsets[i + 1]! += offsets[i]!
   }
   return offsets
+}
+
+function nameSamples(store: KastoreStore, samples: number[]) {
+  const nodeIndividual = store.get('nodes/individual')
+  const names = readMetadataNames(store, 'individuals', ['name', 'sample'])
+  const individualOf = (node: number) => Number(nodeIndividual?.[node] ?? -1)
+  const haplotypes = new Map<number, number>()
+  for (const node of samples) {
+    const individual = individualOf(node)
+    haplotypes.set(individual, (haplotypes.get(individual) ?? 0) + 1)
+  }
+  const seen = new Map<number, number>()
+  return samples.map(node => {
+    const individual = individualOf(node)
+    const name = individual >= 0 ? names[individual] : undefined
+    if (!name) {
+      return `node ${node}`
+    }
+    const haplotype = (seen.get(individual) ?? 0) + 1
+    seen.set(individual, haplotype)
+    return haplotypes.get(individual)! > 1 ? `${name} (${haplotype})` : name
+  })
 }
 
 function max(values: Float64Array) {
@@ -195,5 +228,6 @@ export function readTreeSequenceTables(
     ]
       .filter(id => id >= 0)
       .sort((a, b) => a - b),
+    sampleNames: nameSamples(store, sampleList),
   }
 }

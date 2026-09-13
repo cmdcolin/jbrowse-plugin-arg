@@ -3,6 +3,7 @@ import { observer } from 'mobx-react'
 
 import ArgTooltip from './ArgTooltip.tsx'
 import { ArgRenderer } from './Canvas2DArgRenderer.ts'
+import PaintingRowLabels from './PaintingRowLabels.tsx'
 import PopulationLegend from './PopulationLegend.tsx'
 import TimeAxisLabels from './TimeAxisLabels.tsx'
 
@@ -54,7 +55,11 @@ const ArgBody = observer(function ArgBody({
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
-      <TimeAxisLabels model={model} />
+      {model.drawMode === 'painting' ? (
+        <PaintingRowLabels model={model} />
+      ) : (
+        <TimeAxisLabels model={model} />
+      )}
       <PopulationLegend model={model} />
       <ArgTooltip model={model} mouseTracker={mouseTracker} />
     </div>

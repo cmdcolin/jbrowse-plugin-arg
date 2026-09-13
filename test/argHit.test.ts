@@ -41,6 +41,8 @@ function synthetic(): ArgRegionData {
     mutationTime: new Float32Array(0),
     mutationPosition: new Float64Array(0),
     mutationAllele: [],
+    paintPopulation: new Int16Array(0),
+    paintShare: new Uint8Array(0),
     numTrees: 1,
     treesInRegion: 1,
     maxNodeTime: 3,
@@ -48,6 +50,9 @@ function synthetic(): ArgRegionData {
     timeUnits: 'generations',
     populationNames: ['AFR', 'EUR'],
     samplePopulations: [0, 1],
+    sampleNames: ['s0', 's1', 's2', 's3'],
+    samplePopulation: Int32Array.of(0, 0, 1, 1),
+    sampleRows: Int32Array.of(0, 1, 2, 3),
   }
 }
 
@@ -61,6 +66,7 @@ const block: RenderBlock = {
 }
 
 const state: ArgRenderState = {
+  drawMode: 'trees',
   canvasWidth: 400,
   canvasHeight: 100,
   maxTime: 3,

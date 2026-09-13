@@ -17,6 +17,7 @@ import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
 import type {
   ArgRenderState,
   ArgRenderingBackend,
+  DrawMode,
 } from './components/argTypes.ts'
 import type { ArgHit } from './components/findArgHit.ts'
 import type { LinearArgDisplayConfigModel } from './configSchema.ts'
@@ -53,6 +54,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
         return {
           maxEdges: getConf(self, 'maxEdges'),
           maxSkylinePoints: getConf(self, 'maxSkylinePoints'),
+          painting: getConf(self, 'drawMode') === 'painting',
         }
       },
     }))
@@ -93,6 +95,24 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
         }
         return []
       },
+      get sampleNames(): string[] {
+        for (const data of self.rpcDataMap.values()) {
+          return data.sampleNames
+        }
+        return []
+      },
+      get sampleRows(): Int32Array {
+        for (const data of self.rpcDataMap.values()) {
+          return data.sampleRows
+        }
+        return new Int32Array(0)
+      },
+      get samplePopulation(): Int32Array {
+        for (const data of self.rpcDataMap.values()) {
+          return data.samplePopulation
+        }
+        return new Int32Array(0)
+      },
       get timeUnits() {
         for (const data of self.rpcDataMap.values()) {
           return data.timeUnits
@@ -108,6 +128,9 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
       },
     }))
     .views(self => ({
+      get drawMode(): DrawMode {
+        return getConf(self, 'drawMode') === 'painting' ? 'painting' : 'trees'
+      },
       /**
        * Whether anything on screen is actually drawn as a tree. Every tree
        * narrower than its leaves need is painted as a TMRCA segment in one
@@ -144,7 +167,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
     }))
     .views(self => ({
       get legend() {
-        return !self.hasDendrogram
+        return self.drawMode === 'trees' && !self.hasDendrogram
           ? []
           : self.samplePopulations
               .map(id => ({
@@ -158,6 +181,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
     .views(self => ({
       get renderState(): ArgRenderState {
         return {
+          drawMode: self.drawMode,
           canvasWidth: self.canvasWidthPx,
           canvasHeight: self.height,
           maxTime: self.maxTime,

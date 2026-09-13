@@ -2,6 +2,7 @@ import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
 import type { PerRegionRenderingBackend } from '@jbrowse/render-core/perRegionRenderingBackend'
 
 export type TimeScale = 'linear' | 'log'
+export type DrawMode = 'trees' | 'painting'
 
 /**
  * The width a local tree needs before its topology is drawn instead of its
@@ -20,6 +21,7 @@ export function toTimeScale(value: string): TimeScale {
 }
 
 export interface ArgRenderState {
+  drawMode: DrawMode
   canvasWidth: number
   canvasHeight: number
   /** the whole file's oldest node, so the y axis does not move as you pan */

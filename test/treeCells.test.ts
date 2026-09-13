@@ -42,6 +42,8 @@ function trees(
     mutationTime: new Float32Array(0),
     mutationPosition: new Float64Array(0),
     mutationAllele: [],
+    paintPopulation: new Int16Array(0),
+    paintShare: new Uint8Array(0),
     numTrees: n,
     treesInRegion: n,
     maxNodeTime: 3,
@@ -49,6 +51,9 @@ function trees(
     timeUnits: 'generations',
     populationNames: ['AFR', 'EUR'],
     samplePopulations: [0, 1],
+    sampleNames: ['s0', 's1', 's2', 's3'],
+    samplePopulation: Int32Array.of(0, 0, 1, 1),
+    sampleRows: Int32Array.of(0, 1, 2, 3),
   }
 }
 
@@ -154,6 +159,7 @@ describe('hovering a sampled cell', () => {
     reversed: false,
   }
   const state: ArgRenderState = {
+    drawMode: 'trees',
     canvasWidth: 100,
     canvasHeight: 100,
     maxTime: 3,
@@ -221,6 +227,30 @@ describe('hovering a sampled cell', () => {
       findArgHit(2.5, y(time), [block], new Map([[0, mutated]]), state)
     expect(at(0.25)?.mutation?.time).toBe(0.25)
     expect(at(0.75)?.mutation).toBeUndefined()
+  })
+
+  test('in a painting, a point names its row and the tree under it', () => {
+    // 4 rows of 25px, stacked in the order sampleRows gives; sample 2's
+    // relatives in tree 1 (6..14bp) are rank 0 at a share of 0.5
+    const painted = {
+      ...data,
+      paintPopulation: Int16Array.from({ length: 12 }, () => 1),
+      paintShare: new Uint8Array(12).fill(255),
+      sampleRows: Int32Array.of(3, 2, 1, 0),
+    }
+    painted.paintPopulation[1 * 4 + 2] = 0
+    painted.paintShare[1 * 4 + 2] = 128
+    const found = findArgHit(10, 30, [block], new Map([[0, painted]]), {
+      ...state,
+      drawMode: 'painting',
+    })
+    expect(found).toMatchObject({
+      treeStart: 6,
+      treeEnd: 14,
+      branch: undefined,
+      painting: { sampleName: 's2', population: 'EUR', relatives: 'AFR' },
+    })
+    expect(found?.painting?.share).toBeCloseTo(0.5, 1)
   })
 
   test('branches are found across the cell, not the tree interval', () => {

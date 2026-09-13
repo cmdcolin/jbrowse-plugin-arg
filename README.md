@@ -41,9 +41,39 @@ pnpm build
 node scripts/figures/figures.mjs sweep   # writes img/sweep.png
 ```
 
+## Introgression, as an ancestry painting
+
+![An ancestry painting: one row per haplotype, and A6's row turns population B's color over a stretch where it carries DNA from B](img/introgression.png)
+
+Here two simulated populations split 20,000 generations ago, and 500 generations
+ago population A took in 3% of its DNA from B. With `drawMode: "painting"` the
+display stacks one row per haplotype and colors each local tree's stretch of a
+row by the population that haplotype's nearest relatives belong to. Nearest
+relatives here means the other samples in the first clade it joins. The rows are
+grouped by each sample's own population, with a swatch of that color beside each
+name.
+
+Everywhere but one stretch, every A haplotype's closest relatives are A and
+every B haplotype's are B. Over about 180 kb, A6's row turns B's color. That is
+DNA A6 inherited from the pulse, and its length is set by how long ago the pulse
+was: recombination has had 500 generations to cut it down. The same stretch
+lights up B6 and B3 in A's color. That is the other side of the same event:
+their closest relative there is A6's imported copy, and A6 is an A haplotype.
+
+Drawn as trees, the same file puts A6 at the edge between the blue and orange
+clades in every tree, where the eye cannot find it. As a painting, it is one row
+changing color.
+
+```bash
+uv run --with msprime==1.4.4 python scripts/figures/simulate_introgression.py
+node scripts/figures/figures.mjs introgression
+```
+
+## Reproducing the figures
+
 `figures.mjs` renders every image in this README and in `docs/`; name some to
 render only those. It serves `dist/` on localhost as the plugin, alongside the
-simulated sweep and the hosted demo config rewritten to load that build, and
+simulated data and the hosted demo config rewritten to load that build, and
 opens each view in headless Chrome. It waits for `@jbrowse/capture` to report
 the tracks drawn, and fails if any track shows an error. It then draws the
 callouts at genomic positions and times read from the live view.
@@ -123,11 +153,11 @@ tops of the dendrograms above. Here it runs across the prion gene cluster.
 tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
-Display slots: `colorBy` (`population` or `none`), `branchColor`,
-`skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
-(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
-`sampleSpanColor`, `showMutations`, `mutationColor`, `highlightSamples` and
-`highlightColor`.
+Display slots: `drawMode` (`trees` or `painting`), `colorBy` (`population` or
+`none`), `branchColor`, `skylineColor`, `gridlineColor`, `separateTrees`,
+`treeCellColor`, `timeScale` (`log` or `linear`), `pxPerLeaf`, `maxEdges`,
+`maxSkylinePoints`, `height`, `sampleSpanColor`, `showMutations`,
+`mutationColor`, `highlightSamples` and `highlightColor`.
 
 `highlightSamples` takes sample node ids as strings. In every tree it draws each
 of those samples' own branch in `highlightColor`, and draws the branches that

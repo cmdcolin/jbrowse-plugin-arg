@@ -32,7 +32,7 @@ const PLUGIN_URL = `${BASE}/plugin/${BUNDLE}`
 const figures = [
   {
     name: 'sweep',
-    config: `${BASE}/sweep.config.json`,
+    config: `${BASE}/sim.config.json`,
     assembly: 'sim',
     loc: 'chr1:1-2,000,000',
     tracks: ['sweep'],
@@ -52,6 +52,32 @@ const figures = [
         time: 14_939,
         dx: -230,
         dy: 95,
+      },
+    ],
+  },
+  {
+    name: 'introgression',
+    config: `${BASE}/sim.config.json`,
+    assembly: 'sim',
+    loc: 'chr1:1-1,200,000',
+    tracks: ['introgression'],
+    height: 560,
+    callouts: [
+      {
+        text: 'Here A6 carries DNA from population B',
+        track: 'introgression',
+        bp: 640_000,
+        row: 'A6',
+        dx: 160,
+        dy: 45,
+      },
+      {
+        text: "B6 and B3 light up there too: their closest relative is A6's imported copy",
+        track: 'introgression',
+        bp: 700_000,
+        row: 'B6',
+        dx: 120,
+        dy: 70,
       },
     ],
   },
@@ -173,7 +199,7 @@ function drawCallouts(items) {
   )
   svg.innerHTML = `<defs><marker id="head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="${RED}"/></marker></defs>`
   document.body.append(svg)
-  for (const { text, track, bp, time, dx, dy } of items) {
+  for (const { text, track, bp, time, row, dx, dy } of items) {
     const display = view.tracks.find(t => t.configuration.trackId === track)
       .displays[0]
     const container = document
@@ -186,8 +212,15 @@ function drawCallouts(items) {
       coord: bp,
     })
     const { height } = display
+    // a painting row is named by its sample; a tree height by its time
     const y =
-      height - (Math.log1p(time) / Math.log1p(display.maxTime)) * (height - 3)
+      row === undefined
+        ? height -
+          (Math.log1p(time) / Math.log1p(display.maxTime)) * (height - 3)
+        : ((display.sampleRows.indexOf(display.sampleNames.indexOf(row)) +
+            0.5) *
+            height) /
+          display.numSamples
     const target = {
       x: container.left + offsetPx - view.offsetPx,
       y: container.top + y,

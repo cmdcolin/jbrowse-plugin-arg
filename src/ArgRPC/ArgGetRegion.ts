@@ -30,6 +30,7 @@ export default class ArgGetRegion extends RpcMethodType<'ArgGetRegion'> {
       region,
       maxEdges,
       maxSkylinePoints,
+      painting,
       statusCallback,
       stopToken,
     } = args
@@ -57,6 +58,7 @@ export default class ArgGetRegion extends RpcMethodType<'ArgGetRegion'> {
       end: Math.min(tables.sequenceLength, region.end),
       maxEdges,
       maxSkylinePoints,
+      painting,
     })
   }
 }

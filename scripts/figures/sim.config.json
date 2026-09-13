@@ -29,6 +29,28 @@
         },
         "refName": "chr1"
       }
+    },
+    {
+      "type": "ArgTrack",
+      "trackId": "introgression",
+      "name": "Simulated: population A took in 3% of its DNA from B, 500 generations ago",
+      "assemblyNames": ["sim"],
+      "adapter": {
+        "type": "ArgAdapter",
+        "treesLocation": {
+          "uri": "data/introgression.trees",
+          "locationType": "UriLocation"
+        },
+        "refName": "chr1"
+      },
+      "displays": [
+        {
+          "type": "LinearArgDisplay",
+          "displayId": "introgression-LinearArgDisplay",
+          "drawMode": "painting",
+          "height": 280
+        }
+      ]
     }
   ]
 }

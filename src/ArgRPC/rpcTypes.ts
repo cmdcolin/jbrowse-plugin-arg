@@ -42,6 +42,14 @@ export interface ArgRegionData {
   mutationTime: Float32Array
   mutationPosition: Float64Array
   mutationAllele: string[]
+  /**
+   * The ancestry painting, sent only when asked for: `numTrees * numSamples`
+   * entries, one per tree (or skyline bin) per sample in `samples` order. The
+   * population rank most of that sample's nearest relatives belong to, or -1,
+   * and their share scaled to 0..255.
+   */
+  paintPopulation: Int16Array
+  paintShare: Uint8Array
   numTrees: number
   /** trees in the region before any binning, so the display can say so */
   treesInRegion: number
@@ -50,6 +58,11 @@ export interface ArgRegionData {
   timeUnits: string
   populationNames: string[]
   samplePopulations: number[]
+  sampleNames: string[]
+  /** each sample's own population id, in `samples` order */
+  samplePopulation: Int32Array
+  /** sample indexes in the order a painting stacks its rows */
+  sampleRows: Int32Array
 }
 
 export interface ArgGetRegionArgs {
@@ -57,4 +70,5 @@ export interface ArgGetRegionArgs {
   region: Region
   maxEdges: number
   maxSkylinePoints: number
+  painting: boolean
 }

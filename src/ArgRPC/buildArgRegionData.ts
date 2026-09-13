@@ -5,6 +5,7 @@ import {
 } from '../tskit/TreeIterator.ts'
 import { globalLeafRanks } from '../tskit/globalLeafOrder.ts'
 import { LocalTreeLayout } from '../tskit/layoutLocalTree.ts'
+import { PaintingPacker, sampleRows } from './packPainting.ts'
 
 import type { TreeSequenceTables } from '../tskit/tables.ts'
 import type { ArgRegionData } from './rpcTypes.ts'
@@ -13,6 +14,9 @@ const EMPTY_U32 = new Uint32Array(0)
 const EMPTY_F32 = new Float32Array(0)
 const EMPTY_I32 = new Int32Array(0)
 const EMPTY_F64 = new Float64Array(0)
+
+const EMPTY_I16 = new Int16Array(0)
+const EMPTY_U8 = new Uint8Array(0)
 
 const noMutations = {
   mutationEdge: EMPTY_I32,
@@ -88,6 +92,9 @@ function common(tables: TreeSequenceTables) {
     timeUnits: tables.timeUnits,
     populationNames: tables.populationNames,
     samplePopulations: tables.samplePopulations,
+    sampleNames: tables.sampleNames,
+    samplePopulation: tables.samples.map(node => tables.nodePopulation[node]!),
+    sampleRows: sampleRows(tables),
   }
 }
 
@@ -107,6 +114,8 @@ export function emptyArgRegionData(tables: TreeSequenceTables): ArgRegionData {
     parentNode: EMPTY_I32,
     edgePop: EMPTY_I32,
     ...noMutations,
+    paintPopulation: EMPTY_I16,
+    paintShare: EMPTY_U8,
     numTrees: 0,
     treesInRegion: 0,
     ...common(tables),
@@ -128,12 +137,14 @@ export function buildArgRegionData({
   end,
   maxEdges,
   maxSkylinePoints,
+  painting = false,
 }: {
   tables: TreeSequenceTables
   start: number
   end: number
   maxEdges: number
   maxSkylinePoints: number
+  painting?: boolean
 }): ArgRegionData {
   const breakpoints = treeBreakpoints(tables)
   const firstTree = treeIndexAt(breakpoints, start)
@@ -150,10 +161,12 @@ export function buildArgRegionData({
     const tmrca = new Float32Array(numTrees)
     const edgeCount = new Uint32Array(numTrees)
     const binWidth = treesInRegion / numTrees
+    const painter = painting ? new PaintingPacker(tables, numTrees) : undefined
     let bin = 0
     let binEndTree = binWidth
     treeStart[0] = tree.left
     for (let i = 0; i < treesInRegion; i++) {
+      painter?.add(tree)
       const time = maxRootTime(tree, tables)
       if (time > tmrca[bin]!) {
         tmrca[bin] = time
@@ -161,6 +174,7 @@ export function buildArgRegionData({
       edgeCount[bin] = edgeCount[bin]! + tree.edgeCount
       treeEnd[bin] = tree.right
       if (i + 1 >= binEndTree && bin + 1 < numTrees) {
+        painter?.close(bin)
         bin++
         binEndTree += binWidth
         treeStart[bin] = tree.right
@@ -169,6 +183,7 @@ export function buildArgRegionData({
         break
       }
     }
+    painter?.close(bin)
     return {
       detail: 'skyline',
       treeStart,
@@ -184,6 +199,8 @@ export function buildArgRegionData({
       parentNode: EMPTY_I32,
       edgePop: EMPTY_I32,
       ...noMutations,
+      paintPopulation: painter?.population ?? EMPTY_I16,
+      paintShare: painter?.share ?? EMPTY_U8,
       numTrees,
       treesInRegion,
       ...common(tables),
@@ -218,6 +235,9 @@ export function buildArgRegionData({
   const mutationTime: number[] = []
   const mutationPosition: number[] = []
   const mutationAllele: string[] = []
+  const painter = painting
+    ? new PaintingPacker(tables, treesInRegion)
+    : undefined
   let site = firstSiteAtOrAfter(sitePosition, tree.left)
   let written = 0
 
@@ -264,6 +284,10 @@ export function buildArgRegionData({
         }
       }
     }
+    if (painter) {
+      painter.add(tree)
+      painter.close(i)
+    }
     edgeOffset[i + 1] = written
     edgeCount[i] = written - edgeOffset[i]!
     if (!tree.next()) {
@@ -289,6 +313,8 @@ export function buildArgRegionData({
     mutationTime: Float32Array.from(mutationTime),
     mutationPosition: Float64Array.from(mutationPosition),
     mutationAllele,
+    paintPopulation: painter?.population ?? EMPTY_I16,
+    paintShare: painter?.share ?? EMPTY_U8,
     numTrees: treesInRegion,
     treesInRegion,
     ...common(tables),
