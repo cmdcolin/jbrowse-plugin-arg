@@ -32,6 +32,11 @@ comb. Sequence farther from the selected site had more chances to recombine away
 from the sweeping haplotype, so the dip narrows back to the background within
 about 100 kb.
 
+[Open this view in JBrowse][sim-sweep].
+
+[sim-sweep]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=sim&loc=chr1%3A1-2%2C000%2C000&tracks=sim_sweep
+
 The figure is fully reproducible. msprime is pinned and so is the random seed,
 and the script renders against `jb2/main`:
 
@@ -59,6 +64,12 @@ DNA A6 inherited from the pulse, and its length is set by how long ago the pulse
 was: recombination has had 500 generations to cut it down. The same stretch
 lights up B6 and B3 in A's color. That is the other side of the same event:
 their closest relative there is A6's imported copy, and A6 is an A haplotype.
+
+[Open this view in JBrowse][sim-introgression], then switch the track menu's
+**Draw as** to local trees to compare.
+
+[sim-introgression]:
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=sim&loc=chr1%3A1-1%2C200%2C000&tracks=sim_introgression
 
 Drawn as trees, the same file puts A6 at the edge between the blue and orange
 clades in every tree, where the eye cannot find it. As a painting, it is one row
