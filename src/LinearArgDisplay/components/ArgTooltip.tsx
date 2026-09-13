@@ -28,7 +28,7 @@ const ArgTooltip = observer(function ArgTooltip({
   if (hoveredFeature === undefined || mouseState === undefined) {
     return null
   }
-  const { branch, mutation, painting } = hoveredFeature
+  const { branch, mutation } = hoveredFeature
   // on the right half the card hangs left of the cursor, off the clade the
   // hover just drew bold beneath it
   const flip = mouseState.x > model.canvasWidthPx / 2
@@ -80,19 +80,7 @@ const ArgTooltip = observer(function ArgTooltip({
             </div>
           </>
         )}
-        {painting !== undefined ? (
-          <>
-            <div>
-              <b>{painting.sampleName}</b>
-              {painting.population ? `, ${painting.population}` : ''}
-            </div>
-            <div>
-              {painting.relatives === undefined
-                ? 'no relatives in this tree'
-                : `nearest relatives ${Math.round(painting.share * 100)}% ${painting.relatives}`}
-            </div>
-          </>
-        ) : branch === undefined ? (
+        {branch === undefined ? (
           <div>
             TMRCA {time(hoveredFeature.tmrca)}
             {units}

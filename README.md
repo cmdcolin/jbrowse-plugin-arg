@@ -51,12 +51,10 @@ node scripts/figures/figures.mjs sweep   # writes img/sweep.png
 ![An ancestry painting: one row per haplotype, and A6's row turns population B's color over a stretch where it carries DNA from B](img/introgression.png)
 
 Here two simulated populations split 20,000 generations ago, and 500 generations
-ago population A took in 3% of its DNA from B. With `drawMode: "painting"` the
-display stacks one row per haplotype and colors each local tree's stretch of a
-row by the population that haplotype's nearest relatives belong to. Nearest
-relatives here means the other samples in the first clade it joins. The rows are
-grouped by each sample's own population, with a swatch of that color beside each
-name.
+ago population A took in 3% of its DNA from B. The painting has one row per
+haplotype, and colors each local tree's stretch of a row by the population that
+haplotype's nearest relatives belong to. Nearest relatives here means the other
+samples in the first clade it joins.
 
 Everywhere but one stretch, every A haplotype's closest relatives are A and
 every B haplotype's are B. Over about 180 kb, A6's row turns B's color. That is
@@ -65,11 +63,10 @@ was: recombination has had 500 generations to cut it down. The same stretch
 lights up B6 and B3 in A's color. That is the other side of the same event:
 their closest relative there is A6's imported copy, and A6 is an A haplotype.
 
-[Open this view in JBrowse][sim-introgression], then switch the track menu's
-**Draw as** to local trees to compare.
+[Open the painting above the local trees of the same file][sim-introgression].
 
 [sim-introgression]:
-  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=sim&loc=chr1%3A1-1%2C200%2C000&tracks=sim_introgression
+  https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=sim&loc=chr1%3A1-1%2C200%2C000&tracks=sim_introgression_painting%2Csim_introgression
 
 Drawn as trees, the same file puts A6 at the edge between the blue and orange
 clades in every tree, where the eye cannot find it. As a painting, it is one row
@@ -79,6 +76,42 @@ changing color.
 uv run --with msprime==1.4.4 python scripts/figures/simulate_introgression.py
 node scripts/figures/figures.mjs introgression
 ```
+
+### The painting is a feature track
+
+The plugin does not draw the painting itself. `ArgAdapter` also serves it as
+features: one per run of trees in which a sample's nearest relatives stay the
+same population at the same share. Each feature carries `row`, `sample`,
+`population`, `relatives`, `share` and a `color`. JBrowse's own
+`LinearMultiRowFeatureDisplay` draws those rows, so row labels, grouping,
+clustering, the legend, tooltips and SVG export come from core:
+
+```json
+{
+  "type": "FeatureTrack",
+  "trackId": "my_painting",
+  "name": "Ancestry painting",
+  "assemblyNames": ["hg38"],
+  "adapter": {
+    "type": "ArgAdapter",
+    "treesLocation": { "uri": "my.trees", "locationType": "UriLocation" },
+    "refName": "chr1"
+  },
+  "displays": [
+    {
+      "type": "LinearMultiRowFeatureDisplay",
+      "displayId": "my_painting-LinearMultiRowFeatureDisplay",
+      "partitionField": "row",
+      "color": "jexl:get(feature,'color')"
+    }
+  ]
+}
+```
+
+`row` is the sample's own population followed by its name, so a `rowGroups`
+entry matching `^YRI ` groups and tints that population's rows. That display
+counts at most 200 distinct rows, which bounds the sample count a painting can
+show.
 
 ## Reproducing the figures
 
@@ -164,11 +197,11 @@ tops of the dendrograms above. Here it runs across the prion gene cluster.
 tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
-Display slots: `drawMode` (`trees` or `painting`), `colorBy` (`population` or
-`none`), `branchColor`, `skylineColor`, `gridlineColor`, `separateTrees`,
-`treeCellColor`, `timeScale` (`log` or `linear`), `pxPerLeaf`, `maxEdges`,
-`maxSkylinePoints`, `height`, `sampleSpanColor`, `showMutations`,
-`mutationColor`, `highlightSamples` and `highlightColor`.
+Display slots: `colorBy` (`population` or `none`), `branchColor`,
+`skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
+(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
+`sampleSpanColor`, `showMutations`, `mutationColor`, `highlightSamples` and
+`highlightColor`.
 
 `highlightSamples` takes sample node ids as strings. In every tree it draws each
 of those samples' own branch in `highlightColor`, and draws the branches that
@@ -176,9 +209,9 @@ sample first joins bold in their population colors. That shows who a haplotype's
 nearest relatives are as that changes along the genome.
 
 None of these needs a config edit to try. Clicking a branch traces it the same
-way, and clicking it again stops. The track menu switches between local trees
-and the ancestry painting, and toggles the log time scale, population coloring,
-mutation ticks and tree cells. It also clears every traced lineage at once.
+way, and clicking it again stops. The track menu toggles the log time scale,
+population coloring, mutation ticks and tree cells, and clears every traced
+lineage at once.
 
 ## One leaf order for the whole sequence
 

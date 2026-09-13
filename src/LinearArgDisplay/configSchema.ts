@@ -36,19 +36,6 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
-     * `painting` stacks one row per haplotype and colors it, tree by tree, by
-     * the population its nearest relatives belong to: a haplotype carrying DNA
-     * from elsewhere shows as a run of another population's color
-     */
-    drawMode: {
-      type: 'stringEnum',
-      model: types.enumeration('ArgDrawMode', ['trees', 'painting']),
-      defaultValue: 'trees',
-      description:
-        'draw the local trees, or paint each haplotype by its relatives',
-    },
-    /**
-     * #slot
      * `log` keeps recent coalescences legible next to a deep root
      */
     timeScale: {

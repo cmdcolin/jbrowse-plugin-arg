@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { describe, expect, test } from 'vitest'
 
-import { buildArgRegionData } from '../src/ArgRPC/buildArgRegionData.ts'
+import { paintingRuns } from '../src/ArgAdapter/paintingFeatures.ts'
 import { NULL_NODE, TreeIterator } from '../src/tskit/TreeIterator.ts'
 import { NearestRelatives } from '../src/tskit/nearestRelatives.ts'
 import { readTreeSequenceTables } from '../src/tskit/tables.ts'
@@ -92,52 +92,57 @@ describe('nearest relatives', () => {
   })
 })
 
-describe('packing a painting', () => {
-  const region = { tables, maxEdges: 500_000, maxSkylinePoints: 5000 }
+describe('painting runs', () => {
+  const runs = paintingRuns(tables, 0, 20000)
 
-  test('is sent only when asked for', () => {
-    const plain = buildArgRegionData({ ...region, start: 0, end: 2000 })
-    expect(plain.paintPopulation.length).toBe(0)
+  test("each sample's runs tile the region without overlap", () => {
+    for (const name of tables.sampleNames) {
+      const own = runs
+        .filter(run => run.sample === name)
+        .sort((a, b) => a.start - b.start)
+      expect(own[0]!.start).toBe(0)
+      for (let i = 1; i < own.length; i++) {
+        expect(own[i]!.start).toBe(own[i - 1]!.end)
+      }
+      expect(own.at(-1)!.end).toBeGreaterThanOrEqual(20000)
+    }
   })
 
-  test('a tree column is that tree, one entry per sample', () => {
-    const data = buildArgRegionData({
-      ...region,
-      start: 12345,
-      end: 12346,
-      painting: true,
-    })
+  test('a run carries what its trees say about that sample', () => {
+    const relatives = new NearestRelatives(tables)
     const tree = new TreeIterator(tables)
-    tree.seek(12345)
-    const expected = naive(tree)
-    expect(data.paintPopulation.length).toBe(tables.numSamples)
-    expected.forEach(({ share }, index) => {
-      expect(data.paintShare[index]).toBe(Math.round(share * 255))
-    })
+    for (const run of runs.slice(0, 200)) {
+      tree.seek(run.start)
+      relatives.compute(tree)
+      const index = tables.sampleNames.indexOf(run.sample)
+      const rank = relatives.population[index]!
+      expect(run.relatives).toBe(
+        tables.populationNames[tables.samplePopulations[rank]!] ||
+          `population ${tables.samplePopulations[rank]}`,
+      )
+      expect(run.share).toBe(Math.round(relatives.share[index]! * 4) / 4)
+    }
   })
 
-  test('a skyline bin paints what most of its sequence says', () => {
-    const data = buildArgRegionData({
-      tables,
-      start: 0,
-      end: 100000,
-      maxEdges: 10_000,
-      maxSkylinePoints: 10,
-      painting: true,
-    })
-    expect(data.detail).toBe('skyline')
-    expect(data.paintPopulation.length).toBe(10 * tables.numSamples)
-    expect([...data.paintPopulation].every(p => p >= 0 && p < 3)).toBe(true)
+  test('neighbouring runs of one sample always differ', () => {
+    const bySample = new Map<string, typeof runs>()
+    for (const run of runs) {
+      bySample.set(run.sample, [...(bySample.get(run.sample) ?? []), run])
+    }
+    for (const own of bySample.values()) {
+      own.sort((a, b) => a.start - b.start)
+      for (let i = 1; i < own.length; i++) {
+        const same =
+          own[i]!.relatives === own[i - 1]!.relatives &&
+          own[i]!.share === own[i - 1]!.share
+        expect(same).toBe(false)
+      }
+    }
   })
 
-  test('rows group samples by their own population', () => {
-    const data = buildArgRegionData({ ...region, start: 0, end: 10 })
-    const own = [...data.sampleRows].map(index =>
-      tables.samplePopulations.indexOf(
-        tables.nodePopulation[tables.samples[index]!]!,
-      ),
-    )
-    expect(own).toEqual([...own].sort((a, b) => a - b))
-    expect(new Set(data.sampleRows).size).toBe(tables.numSamples)
+  test("rows lead with the sample's own population", () => {
+    expect(
+      runs.every(run => run.row === `${run.population} ${run.sample}`),
+    ).toBe(true)
   })
 })

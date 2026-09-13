@@ -11,7 +11,10 @@
       "sequence": {
         "type": "ReferenceSequenceTrack",
         "trackId": "sim-ref",
-        "adapter": { "type": "IndexedFastaAdapter", "uri": "data/sim.fa" }
+        "adapter": {
+          "type": "IndexedFastaAdapter",
+          "uri": "data/sim.fa"
+        }
       }
     }
   ],
@@ -42,13 +45,50 @@
           "locationType": "UriLocation"
         },
         "refName": "chr1"
+      }
+    },
+    {
+      "type": "FeatureTrack",
+      "trackId": "introgression_painting",
+      "name": "Simulated introgression, painted by each haplotype's nearest relatives",
+      "assemblyNames": ["sim"],
+      "adapter": {
+        "type": "ArgAdapter",
+        "treesLocation": {
+          "uri": "data/introgression.trees",
+          "locationType": "UriLocation"
+        },
+        "refName": "chr1"
       },
       "displays": [
         {
-          "type": "LinearArgDisplay",
-          "displayId": "introgression-LinearArgDisplay",
-          "drawMode": "painting",
-          "height": 280
+          "type": "LinearMultiRowFeatureDisplay",
+          "displayId": "introgression_painting-LinearMultiRowFeatureDisplay",
+          "partitionField": "row",
+          "color": "jexl:get(feature,'color')",
+          "height": 280,
+          "rowGroups": [
+            {
+              "match": "^A ",
+              "group": "A",
+              "color": "#0072b2"
+            },
+            {
+              "match": "^B ",
+              "group": "B",
+              "color": "#e69f00"
+            }
+          ],
+          "legend": [
+            {
+              "label": "relatives mostly A",
+              "color": "#0072b2"
+            },
+            {
+              "label": "relatives mostly B",
+              "color": "#e69f00"
+            }
+          ]
         }
       ]
     }

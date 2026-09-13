@@ -6,7 +6,6 @@ import {
   mutationsOfCell,
   screenCells,
 } from './drawArg.ts'
-import { paintingCellAt } from './drawPainting.ts'
 import { timeToY } from './timeAxis.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
@@ -18,14 +17,6 @@ export interface ArgBranch {
   time: number
   leafCount: number
   populationName: string | undefined
-}
-
-export interface ArgPaintingCell {
-  sampleName: string
-  /** the sample's own population, and the one its nearest relatives are */
-  population: string | undefined
-  relatives: string | undefined
-  share: number
 }
 
 export interface ArgMutation {
@@ -49,7 +40,6 @@ export interface ArgHit {
   treesInCell: number
   branch: ArgBranch | undefined
   mutation?: ArgMutation
-  painting?: ArgPaintingCell
 }
 
 export function sameArgHit(a: ArgHit, b: ArgHit) {
@@ -58,8 +48,7 @@ export function sameArgHit(a: ArgHit, b: ArgHit) {
     a.treeEnd === b.treeEnd &&
     a.branch?.node === b.branch?.node &&
     a.mutation?.position === b.mutation?.position &&
-    a.mutation?.allele === b.mutation?.allele &&
-    a.painting?.sampleName === b.painting?.sampleName
+    a.mutation?.allele === b.mutation?.allele
   )
 }
 
@@ -169,9 +158,6 @@ export function findArgHit(
   state: ArgRenderState,
 ) {
   const { canvasWidth, canvasHeight, maxTime, timeScale } = state
-  if (state.drawMode === 'painting') {
-    return findPaintingHit(mouseX, mouseY, blocks, regions, state)
-  }
   const toY = (time: number) => timeToY(time, maxTime, canvasHeight, timeScale)
   const near = (left: number, width: number) =>
     mouseX >= left - ARG_HIT_RADIUS_PX &&
@@ -276,54 +262,4 @@ export function findArgHit(
     }
   }
   return best === undefined ? undefined : toHit(best)
-}
-
-function populationName(data: ArgRegionData, id: number | undefined) {
-  return id === undefined || id < 0
-    ? undefined
-    : data.populationNames[id] || `population ${id}`
-}
-
-function findPaintingHit(
-  mouseX: number,
-  mouseY: number,
-  blocks: RenderBlock[],
-  regions: ReadonlyMap<number, ArgRegionData>,
-  state: ArgRenderState,
-): ArgHit | undefined {
-  for (const block of blocks) {
-    const data = regions.get(block.displayedRegionIndex)
-    const clip = clampBlockScissor(
-      block.screenStartPx,
-      block.screenEndPx,
-      state.canvasWidth,
-    )
-    if (
-      data !== undefined &&
-      clip &&
-      mouseX >= clip.scissorX &&
-      mouseX < clip.scissorX + clip.scissorW
-    ) {
-      const cell = paintingCellAt(data, block, state, mouseX, mouseY)
-      if (cell) {
-        const { tree, sample } = cell
-        const entry = tree * data.numSamples + sample
-        const rank = data.paintPopulation[entry]!
-        return {
-          treeStart: data.treeStart[tree]!,
-          treeEnd: data.treeEnd[tree]!,
-          tmrca: data.tmrca[tree]!,
-          treesInCell: 1,
-          branch: undefined,
-          painting: {
-            sampleName: data.sampleNames[sample] ?? `sample ${sample}`,
-            population: populationName(data, data.samplePopulation[sample]),
-            relatives: populationName(data, data.samplePopulations[rank]),
-            share: data.paintShare[entry]! / 255,
-          },
-        }
-      }
-    }
-  }
-  return undefined
 }

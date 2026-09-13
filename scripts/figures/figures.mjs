@@ -60,24 +60,24 @@ const figures = [
     config: `${BASE}/sim.config.json`,
     assembly: 'sim',
     loc: 'chr1:1-1,200,000',
-    tracks: ['introgression'],
+    tracks: ['introgression_painting'],
     height: 560,
     callouts: [
       {
         text: 'Here A6 carries DNA from population B',
-        track: 'introgression',
+        track: 'introgression_painting',
         bp: 640_000,
-        row: 'A6',
+        row: 'A A6',
         dx: 160,
         dy: 45,
       },
       {
         text: "B6 and B3 light up there too: their closest relative is A6's imported copy",
-        track: 'introgression',
+        track: 'introgression_painting',
         bp: 700_000,
-        row: 'B6',
-        dx: 120,
-        dy: 70,
+        row: 'B B6',
+        dx: 60,
+        dy: -60,
       },
     ],
   },
@@ -212,15 +212,12 @@ function drawCallouts(items) {
       coord: bp,
     })
     const { height } = display
-    // a painting row is named by its sample; a tree height by its time
+    // a painting row is named by its partition value; a tree height by time
     const y =
       row === undefined
         ? height -
           (Math.log1p(time) / Math.log1p(display.maxTime)) * (height - 3)
-        : ((display.sampleRows.indexOf(display.sampleNames.indexOf(row)) +
-            0.5) *
-            height) /
-          display.numSamples
+        : (display.rowIndexByValue.get(row) + 0.5) * display.effectiveRowHeight
     const target = {
       x: container.left + offsetPx - view.offsetPx,
       y: container.top + y,

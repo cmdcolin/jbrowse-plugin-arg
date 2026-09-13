@@ -141,7 +141,11 @@ function siteOffsets(mutationSite: Int32Array, numSites: number) {
 
 function nameSamples(store: KastoreStore, samples: number[]) {
   const nodeIndividual = store.get('nodes/individual')
-  const names = readMetadataNames(store, 'individuals', ['name', 'sample'])
+  const names = readMetadataNames(store, 'individuals', [
+    'name',
+    'sample',
+    'individual_id',
+  ])
   const individualOf = (node: number) => Number(nodeIndividual?.[node] ?? -1)
   const haplotypes = new Map<number, number>()
   for (const node of samples) {
