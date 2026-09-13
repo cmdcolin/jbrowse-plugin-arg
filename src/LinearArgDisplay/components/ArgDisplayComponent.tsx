@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 import DisplayChrome from '@jbrowse/display-kit/DisplayChrome'
 import { observer } from 'mobx-react'
 
@@ -49,8 +51,32 @@ const ArgBody = observer(function ArgBody({
   canvasRef: React.Ref<HTMLCanvasElement>
   mouseTracker: MouseTracker
 }) {
+  const pressedAt = useRef<{ x: number; y: number }>(undefined)
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div
+      style={{ position: 'relative', width: '100%', height: '100%' }}
+      onPointerDown={event => {
+        pressedAt.current = { x: event.clientX, y: event.clientY }
+      }}
+      onClick={event => {
+        // a drag that pans the view ends in a click too, and is not one
+        const pressed = pressedAt.current
+        if (
+          !pressed ||
+          Math.hypot(event.clientX - pressed.x, event.clientY - pressed.y) > 3
+        ) {
+          return
+        }
+        const rect = event.currentTarget.getBoundingClientRect()
+        const hit = model.argHitAt(
+          event.clientX - rect.left,
+          event.clientY - rect.top,
+        )
+        if (hit?.branch) {
+          model.toggleTrace(hit.branch.node)
+        }
+      }}
+    >
       <canvas
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block' }}

@@ -1,4 +1,8 @@
-import { ConfigurationReference, getConf } from '@jbrowse/core/configuration'
+import {
+  ConfigurationReference,
+  getConf,
+  setConf,
+} from '@jbrowse/core/configuration'
 import { BaseDisplay } from '@jbrowse/core/pluggableElementTypes/models'
 import { getContainingView } from '@jbrowse/core/util'
 import MultiRegionDisplayMixin from '@jbrowse/display-kit/MultiRegionDisplayMixin'
@@ -12,6 +16,7 @@ import { dendrogramPx, toTimeScale } from './components/argTypes.ts'
 import { findArgHit, sameArgHit } from './components/findArgHit.ts'
 import { populationColor } from './components/palette.ts'
 import { layoutTreeCells } from './components/treeCells.ts'
+import { buildArgTrackMenuItems } from './trackMenuItems.ts'
 
 import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
 import type {
@@ -128,6 +133,11 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
       },
     }))
     .views(self => ({
+      get highlightSamples(): number[] {
+        return getConf(self, 'highlightSamples')
+          .map(Number)
+          .filter(Number.isInteger)
+      },
       get drawMode(): DrawMode {
         return getConf(self, 'drawMode') === 'painting' ? 'painting' : 'trees'
       },
@@ -198,9 +208,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           numSamples: self.numSamples,
           showMutations: getConf(self, 'showMutations'),
           mutationColor: getConf(self, 'mutationColor'),
-          highlightSamples: getConf(self, 'highlightSamples')
-            .map(Number)
-            .filter(Number.isInteger),
+          highlightSamples: self.highlightSamples,
           highlightColor: getConf(self, 'highlightColor'),
           hoveredClade: self.hoveredFeature?.branch
             ? {
@@ -211,6 +219,27 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
         }
       },
     }))
+    .views(self => {
+      const { trackMenuItems: superTrackMenuItems } = self
+      return {
+        trackMenuItems() {
+          return [
+            ...superTrackMenuItems(),
+            ...buildArgTrackMenuItems({
+              drawMode: self.drawMode,
+              timeScale: toTimeScale(getConf(self, 'timeScale')),
+              colorByPopulation: getConf(self, 'colorBy') === 'population',
+              showMutations: getConf(self, 'showMutations'),
+              separateTrees: getConf(self, 'separateTrees'),
+              highlightSamples: self.highlightSamples,
+              setSetting: (slot, value) => {
+                setConf(self, slot as 'drawMode', value)
+              },
+            }),
+          ]
+        },
+      }
+    })
     .views(self => ({
       argHitAt(mouseX: number, mouseY: number) {
         return findArgHit(
@@ -223,6 +252,18 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
       },
     }))
     .actions(self => ({
+      /** follow a branch's node through every tree, or stop following it */
+      toggleTrace(node: number) {
+        const traced = self.highlightSamples
+        setConf(
+          self,
+          'highlightSamples',
+          (traced.includes(node)
+            ? traced.filter(n => n !== node)
+            : [...traced, node]
+          ).map(String),
+        )
+      },
       fetchNeeded(needed: { region: Region; displayedRegionIndex: number }[]) {
         const { adapterConfig } = self
         return fetchEachRegion(self, needed, {

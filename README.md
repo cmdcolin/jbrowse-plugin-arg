@@ -164,6 +164,11 @@ of those samples' own branch in `highlightColor`, and draws the branches that
 sample first joins bold in their population colors. That shows who a haplotype's
 nearest relatives are as that changes along the genome.
 
+None of these needs a config edit to try. Clicking a branch traces it the same
+way, and clicking it again stops. The track menu switches between local trees
+and the ancestry painting, and toggles the log time scale, population coloring,
+mutation ticks and tree cells. It also clears every traced lineage at once.
+
 ## One leaf order for the whole sequence
 
 Neighbouring local trees differ only by the subtree a recombination moved, but
