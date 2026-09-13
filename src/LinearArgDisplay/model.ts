@@ -168,6 +168,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           treeCellColor: getConf(self, 'separateTrees')
             ? getConf(self, 'treeCellColor')
             : '',
+          sampleSpanColor: getConf(self, 'sampleSpanColor'),
           populationColors: self.populationColors,
           pxPerLeaf: getConf(self, 'pxPerLeaf'),
           numSamples: self.numSamples,

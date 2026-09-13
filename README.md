@@ -36,14 +36,17 @@ The figure is fully reproducible. msprime is pinned and so is the random seed,
 and the script renders against `jb2/main`:
 
 ```bash
-uv run --with msprime==1.4.4 python scripts/sweep-figure/simulate.py
+uv run --with msprime==1.4.4 python scripts/figures/simulate_sweep.py
 pnpm build
-node scripts/sweep-figure/figure.mjs   # writes img/sweep.png
+node scripts/figures/figures.mjs sweep   # writes img/sweep.png
 ```
 
-`figure.mjs` serves `dist/` and the simulated data on localhost and opens them
-in headless Chrome. It waits for `@jbrowse/capture` to report the track drawn,
-then draws the callouts at genomic positions and times read from the live view.
+`figures.mjs` renders every image in this README and in `docs/`; name some to
+render only those. It serves `dist/` on localhost as the plugin, alongside the
+simulated sweep and the hosted demo config rewritten to load that build, and
+opens each view in headless Chrome. It waits for `@jbrowse/capture` to report
+the tracks drawn, and fails if any track shows an error. It then draws the
+callouts at genomic positions and times read from the live view.
 
 ## Live demo
 
@@ -86,6 +89,10 @@ draws the one that spans the most sequence. A busier column collapses to its
 TMRCA, so dendrograms grow out of the skyline as you zoom in rather than
 replacing it.
 
+A column's tree is a stand-in, and the display says so. A strip along the foot
+of its cell darkens the interval that tree really spans, in `sampleSpanColor`,
+and hovering it reports how many trees it stands for.
+
 **Zoomed in** (the picture at the top) — each local tree as a dendrogram, spread
 across the interval it spans. Recombination breaks the sequence into trees;
 neighbouring ones differ by the subtree a recombination moved.
@@ -119,7 +126,7 @@ chromosome of the assembly.
 Display slots: `colorBy` (`population` or `none`), `branchColor`,
 `skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
 (`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
-`highlightSamples` and `highlightColor`.
+`sampleSpanColor`, `highlightSamples` and `highlightColor`.
 
 `highlightSamples` takes sample node ids as strings. In every tree it draws each
 of those samples' own branch in `highlightColor`, and draws the branches that

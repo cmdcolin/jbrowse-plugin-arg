@@ -34,9 +34,11 @@ It is not a genealogy of real people. The track is named
 
 ## Zoomed in
 
-Each local tree as a dendrogram across the interval it spans. The red segments
-between them are trees too narrow at this width to separate 50 leaves, so they
-show as the height their root coalesces at.
+Each local tree as a dendrogram across the interval it spans. Where a few trees
+are too narrow at this width to separate 50 leaves, the widest of them is drawn
+across their shared column. The strip under that cell marks where the drawn tree
+really lies. The red segments are stretches too crowded for even that, so they
+show as the height their roots coalesce at.
 
 ![Local trees of a simulated ARG under the SIRPA gene](../img/trees.png)
 

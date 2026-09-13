@@ -94,6 +94,16 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
+     * a cell standing in for several narrow trees marks the interval the drawn
+     * one actually spans in this color, along the cell's foot
+     */
+    sampleSpanColor: {
+      type: 'color',
+      defaultValue: '#7a8ba3',
+      description: 'color marking where a sampled tree really lies in its cell',
+    },
+    /**
+     * #slot
      */
     gridlineColor: {
       type: 'color',

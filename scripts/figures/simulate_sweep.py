@@ -1,6 +1,6 @@
 """A hard selective sweep at 1 Mb in 2 Mb of sequence, and a matching reference.
 
-uv run --with msprime==1.4.4 python scripts/sweep-figure/simulate.py
+uv run --with msprime==1.4.4 python scripts/figures/simulate_sweep.py
 """
 
 import random

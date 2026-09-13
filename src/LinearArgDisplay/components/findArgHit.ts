@@ -22,6 +22,8 @@ export interface ArgHit {
   treeStart: number
   treeEnd: number
   tmrca: number
+  /** trees in the column this tree was drawn to stand for */
+  treesInCell: number
   branch: ArgBranch | undefined
 }
 
@@ -91,10 +93,12 @@ interface Candidate {
   data: ArgRegionData
   tree: number
   edge: number | undefined
+  count: number
 }
 
-function toHit({ data, tree, edge }: Candidate): ArgHit {
+function toHit({ data, tree, edge, count }: Candidate): ArgHit {
   const shared = {
+    treesInCell: count,
     treeStart: data.treeStart[tree]!,
     treeEnd: data.treeEnd[tree]!,
     tmrca: data.tmrca[tree]!,
@@ -155,7 +159,7 @@ export function findArgHit(
       mouseX < clip.scissorX + clip.scissorW
     ) {
       const { toPx, cells, collapsed } = screenCells(data, block, state)
-      for (const { tree, left, width } of cells) {
+      for (const { tree, left, width, count } of cells) {
         if (!near(left, width)) {
           continue
         }
@@ -183,7 +187,7 @@ export function findArgHit(
           )
           if (distance < bestDistance) {
             bestDistance = distance
-            best = { data, tree, edge: j }
+            best = { data, tree, edge: j, count }
           }
         }
       }
@@ -204,7 +208,7 @@ export function findArgHit(
           )
           if (distance < bestDistance) {
             bestDistance = distance
-            best = { data, tree, edge: undefined }
+            best = { data, tree, edge: undefined, count: 1 }
           }
         }
       }

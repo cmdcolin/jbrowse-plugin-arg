@@ -17,7 +17,8 @@ export interface TreeCell {
   tree: number
   start: number
   end: number
-  sampled: boolean
+  /** how many trees the cell stands for; more than one makes it a sample */
+  count: number
 }
 
 export interface TreeCellLayout {
@@ -58,7 +59,7 @@ export function layoutTreeCells(
           best = i
         }
       }
-      cells.push({ tree: best, start, end, sampled: group.length > 1 })
+      cells.push({ tree: best, start, end, count: group.length })
     } else {
       collapsed.push(...group)
     }
@@ -71,7 +72,7 @@ export function layoutTreeCells(
       flush()
     } else if (end - start >= minWidthBp) {
       flush()
-      cells.push({ tree: i, start, end, sampled: false })
+      cells.push({ tree: i, start, end, count: 1 })
     } else {
       const column = Math.floor((start + end) / 2 / minWidthBp)
       if (column !== groupColumn) {

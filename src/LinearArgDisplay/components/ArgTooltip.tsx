@@ -68,6 +68,11 @@ const ArgTooltip = observer(function ArgTooltip({
         tree {count(Math.round(hoveredFeature.treeStart))}..
         {count(Math.round(hoveredFeature.treeEnd))}
       </div>
+      {hoveredFeature.treesInCell > 1 ? (
+        <div>
+          standing in for {count(hoveredFeature.treesInCell)} trees here
+        </div>
+      ) : null}
     </div>
   )
 })

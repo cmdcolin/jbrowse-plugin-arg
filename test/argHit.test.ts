@@ -65,6 +65,7 @@ const state: ArgRenderState = {
   skylineColor: '#888',
   gridlineColor: '#eee',
   treeCellColor: '',
+  sampleSpanColor: '#888',
   populationColors: [],
   pxPerLeaf: 5,
   numSamples: 4,
@@ -138,6 +139,7 @@ describe('hit testing a dendrogram', () => {
       treeStart: 100,
       treeEnd: 200,
       tmrca: 3,
+      treesInCell: 1,
       branch: undefined,
     })
   })
@@ -162,6 +164,7 @@ describe('hit testing a skyline', () => {
       treeStart: 100,
       treeEnd: 200,
       tmrca: 3,
+      treesInCell: 1,
       branch: undefined,
     })
   })

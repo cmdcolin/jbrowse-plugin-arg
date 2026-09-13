@@ -30,6 +30,8 @@ export interface ArgRenderState {
   gridlineColor: string
   /** background behind one local tree; empty when trees are not separated */
   treeCellColor: string
+  /** marks the interval a sampled cell's tree really spans */
+  sampleSpanColor: string
   /** color per population id; empty when branches are drawn one color */
   populationColors: string[]
   /** leaves need room to separate; below this a tree collapses to its TMRCA */

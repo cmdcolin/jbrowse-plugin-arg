@@ -13,11 +13,16 @@ import type { Ctx2D } from '@jbrowse/core/util/paintLayer'
 import type { RenderBlock } from '@jbrowse/render-core/renderBlock'
 
 const GUTTER_PX = 2
+const SPAN_STRIP_PX = 6
 
 export interface ScreenCell {
   tree: number
   left: number
   width: number
+  count: number
+  /** where the drawn tree itself sits, which a sampled cell is wider than */
+  treeLeft: number
+  treeRight: number
 }
 
 /**
@@ -42,7 +47,16 @@ export function screenCells(
     cells: cells.map(cell => {
       const a = toPx(cell.start)
       const b = toPx(cell.end)
-      return { tree: cell.tree, left: Math.min(a, b), width: Math.abs(b - a) }
+      const c = toPx(data.treeStart[cell.tree]!)
+      const d = toPx(data.treeEnd[cell.tree]!)
+      return {
+        tree: cell.tree,
+        left: Math.min(a, b),
+        width: Math.abs(b - a),
+        count: cell.count,
+        treeLeft: Math.min(c, d),
+        treeRight: Math.max(c, d),
+      }
     }),
   }
 }
@@ -73,6 +87,32 @@ export function drawTreeCells(
       }
     },
   )
+}
+
+/**
+ * A cell standing in for several narrow trees gets a strip along its foot, pale
+ * across the cell and dark over the drawn tree's own interval, so a sample never
+ * passes for a tree that spans the whole cell. Painted over the leaves' feet.
+ */
+function drawSampleSpans(
+  ctx: Ctx2D,
+  cells: ScreenCell[],
+  state: ArgRenderState,
+) {
+  const { canvasHeight, sampleSpanColor } = state
+  const top = canvasHeight - SPAN_STRIP_PX
+  for (const cell of cells) {
+    if (cell.count > 1) {
+      const left = cell.left + GUTTER_PX
+      const right = cell.left + cell.width - GUTTER_PX
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'
+      ctx.fillRect(left, top, right - left, SPAN_STRIP_PX)
+      const from = Math.max(left, cell.treeLeft)
+      const to = Math.min(right, cell.treeRight)
+      ctx.fillStyle = sampleSpanColor
+      ctx.fillRect(from, top, Math.max(1, to - from), SPAN_STRIP_PX)
+    }
+  }
 }
 
 export function drawTimeGridlines(ctx: Ctx2D, state: ArgRenderState) {
@@ -171,6 +211,7 @@ export function drawArgBlocks(
         }
         ctx.stroke()
       }
+      drawSampleSpans(ctx, cells, state)
 
       // A traced sample's own branch, and the branches it first joins drawn
       // bold in their own colors: who a haplotype's nearest relatives are is

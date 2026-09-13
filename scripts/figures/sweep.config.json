@@ -2,7 +2,7 @@
   "plugins": [
     {
       "name": "Arg",
-      "url": "http://localhost:8899/plugin/jbrowse-plugin-arg.umd.js"
+      "umdUrl": "http://localhost:8899/plugin/jbrowse-plugin-arg.umd.js"
     }
   ],
   "assemblies": [

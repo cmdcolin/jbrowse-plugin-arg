@@ -5,4 +5,4 @@ esm
 meta.json
 *.tsbuildinfo
 __pycache__/
-scripts/sweep-figure/data/
+scripts/figures/data/
