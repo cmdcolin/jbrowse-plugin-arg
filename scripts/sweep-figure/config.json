@@ -1,0 +1,34 @@
+{
+  "plugins": [
+    {
+      "name": "Arg",
+      "url": "http://localhost:8899/plugin/jbrowse-plugin-arg.umd.js"
+    }
+  ],
+  "assemblies": [
+    {
+      "name": "sim",
+      "sequence": {
+        "type": "ReferenceSequenceTrack",
+        "trackId": "sim-ref",
+        "adapter": { "type": "IndexedFastaAdapter", "uri": "data/sim.fa" }
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "type": "ArgTrack",
+      "trackId": "sweep",
+      "name": "Simulated: a beneficial mutation swept to fixation at 1 Mb",
+      "assemblyNames": ["sim"],
+      "adapter": {
+        "type": "ArgAdapter",
+        "treesLocation": {
+          "uri": "data/sweep.trees",
+          "locationType": "UriLocation"
+        },
+        "refName": "chr1"
+      }
+    }
+  ]
+}

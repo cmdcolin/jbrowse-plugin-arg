@@ -1,5 +1,6 @@
 allowBuilds:
   esbuild: true
+  puppeteer: false
 minimumReleaseAgeExclude:
   - '@jbrowse/add-track-core@5.0.0-beta.4'
   - '@jbrowse/core@5.0.0-beta.4'

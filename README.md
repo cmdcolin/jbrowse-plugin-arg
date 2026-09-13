@@ -15,6 +15,36 @@ There is no server. The `.trees` format is a flat key-value store of columnar
 arrays ([kastore](https://github.com/tskit-dev/kastore)), and this plugin parses
 it in the browser, so a file behind any static URL works.
 
+## A selective sweep, in one picture
+
+![A simulated selective sweep: the TMRCA line runs near 10,000 generations across 2 Mb and drops to a single shallow tree at 1 Mb](img/sweep.png)
+
+This is 2 Mb of simulated genome from 20 haplotypes. A beneficial mutation arose
+at 1 Mb and swept to fixation. The red line is how long ago all 20 samples last
+shared an ancestor, measured at each position along the genome.
+
+Across most of the sequence that ancestor lived 10,000 or more generations ago.
+At the swept site the line falls off a cliff. The selected mutation copied one
+haplotype into everyone within a few hundred generations, so all 20 samples
+descend from one ancestor about 230 generations back. Zoomed out this far, that
+stretch is the only place a local tree is wide enough to draw, and it is a squat
+comb. Sequence farther from the selected site had more chances to recombine away
+from the sweeping haplotype, so the dip narrows back to the background within
+about 100 kb.
+
+The figure is fully reproducible. msprime is pinned and so is the random seed,
+and the script renders against `jb2/main`:
+
+```bash
+uv run --with msprime==1.4.4 python scripts/sweep-figure/simulate.py
+pnpm build
+node scripts/sweep-figure/figure.mjs   # writes img/sweep.png
+```
+
+`figure.mjs` serves `dist/` and the simulated data on localhost and opens them
+in headless Chrome. It waits for `@jbrowse/capture` to report the track drawn,
+then draws the callouts at genomic positions and times read from the live view.
+
 ## Live demo
 
 Nothing to install. An inferred human genealogy at _PRNP_ on hg38 chr20 — 23
@@ -50,9 +80,11 @@ bar. Point your own deployment at a 5.0.0-beta build.
 ## What it draws
 
 The picture changes with zoom, without a mode switch. A tree draws its topology
-once it has `pxPerLeaf` pixels per sample (2 by default) and collapses to its
-TMRCA below that, so dendrograms grow out of the skyline as you zoom in rather
-than replacing it.
+once it has `pxPerLeaf` pixels per sample (2 by default). Trees narrower than
+that are grouped into columns of that width. A column holding up to four trees
+draws the one that spans the most sequence. A busier column collapses to its
+TMRCA, so dendrograms grow out of the skyline as you zoom in rather than
+replacing it.
 
 **Zoomed in** (the picture at the top) — each local tree as a dendrogram, spread
 across the interval it spans. Recombination breaks the sequence into trees;
@@ -86,7 +118,13 @@ chromosome of the assembly.
 
 Display slots: `colorBy` (`population` or `none`), `branchColor`,
 `skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
-(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`.
+(`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
+`highlightSamples` and `highlightColor`.
+
+`highlightSamples` takes sample node ids as strings. In every tree it draws each
+of those samples' own branch in `highlightColor`, and draws the branches that
+sample first joins bold in their population colors. That shows who a haplotype's
+nearest relatives are as that changes along the genome.
 
 ## One leaf order for the whole sequence
 

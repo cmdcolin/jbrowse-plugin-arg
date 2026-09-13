@@ -4,7 +4,5 @@ dist
 esm
 meta.json
 *.tsbuildinfo
-stories/out/
-stories/*.trees
-stories/sim.fa*
 __pycache__/
+scripts/sweep-figure/data/
