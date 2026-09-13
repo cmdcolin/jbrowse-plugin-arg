@@ -12,6 +12,28 @@ import type { ArgRegionData } from './rpcTypes.ts'
 const EMPTY_U32 = new Uint32Array(0)
 const EMPTY_F32 = new Float32Array(0)
 const EMPTY_I32 = new Int32Array(0)
+const EMPTY_F64 = new Float64Array(0)
+
+const noMutations = {
+  mutationEdge: EMPTY_I32,
+  mutationTime: EMPTY_F32,
+  mutationPosition: EMPTY_F64,
+  mutationAllele: [] as string[],
+}
+
+function firstSiteAtOrAfter(positions: Float64Array, position: number) {
+  let low = 0
+  let high = positions.length
+  while (low < high) {
+    const mid = (low + high) >>> 1
+    if (positions[mid]! < position) {
+      low = mid + 1
+    } else {
+      high = mid
+    }
+  }
+  return low
+}
 
 function treeIndexAt(breakpoints: Float64Array, position: number) {
   let low = 0
@@ -84,6 +106,7 @@ export function emptyArgRegionData(tables: TreeSequenceTables): ArgRegionData {
     childNode: EMPTY_I32,
     parentNode: EMPTY_I32,
     edgePop: EMPTY_I32,
+    ...noMutations,
     numTrees: 0,
     treesInRegion: 0,
     ...common(tables),
@@ -160,6 +183,7 @@ export function buildArgRegionData({
       childNode: EMPTY_I32,
       parentNode: EMPTY_I32,
       edgePop: EMPTY_I32,
+      ...noMutations,
       numTrees,
       treesInRegion,
       ...common(tables),
@@ -180,7 +204,21 @@ export function buildArgRegionData({
   const parentNode = new Int32Array(capacity)
   const edgePop = new Int32Array(capacity)
   const layout = new LocalTreeLayout(tables.numNodes, globalLeafRanks(tables))
-  const { nodeTime } = tables
+  const {
+    nodeTime,
+    sitePosition,
+    siteMutationOffset,
+    siteAncestralState,
+    mutationNode,
+    mutationDerivedState,
+  } = tables
+  // stale entries from earlier trees point below this tree's first edge
+  const edgeAbove = new Int32Array(tables.numNodes).fill(-1)
+  const mutationEdge: number[] = []
+  const mutationTime: number[] = []
+  const mutationPosition: number[] = []
+  const mutationAllele: string[] = []
+  let site = firstSiteAtOrAfter(sitePosition, tree.left)
   let written = 0
 
   for (let i = 0; i < treesInRegion; i++) {
@@ -204,7 +242,26 @@ export function buildArgRegionData({
         childNode[written] = node
         parentNode[written] = parent
         edgePop[written] = layout.cladePop[node]!
+        edgeAbove[node] = written
         written++
+      }
+    }
+    for (
+      ;
+      site < sitePosition.length && sitePosition[site]! < tree.right;
+      site++
+    ) {
+      const to = siteMutationOffset[site + 1]!
+      for (let m = siteMutationOffset[site]!; m < to; m++) {
+        const edge = edgeAbove[mutationNode[m]!]!
+        if (edge >= edgeOffset[i]!) {
+          mutationEdge.push(edge)
+          mutationTime.push(tables.mutationTime[m]!)
+          mutationPosition.push(sitePosition[site]!)
+          mutationAllele.push(
+            `${siteAncestralState[site] ?? ''}>${mutationDerivedState[m] ?? ''}`,
+          )
+        }
       }
     }
     edgeOffset[i + 1] = written
@@ -228,6 +285,10 @@ export function buildArgRegionData({
     childNode: childNode.slice(0, written),
     parentNode: parentNode.slice(0, written),
     edgePop: edgePop.slice(0, written),
+    mutationEdge: Int32Array.from(mutationEdge),
+    mutationTime: Float32Array.from(mutationTime),
+    mutationPosition: Float64Array.from(mutationPosition),
+    mutationAllele,
     numTrees: treesInRegion,
     treesInRegion,
     ...common(tables),

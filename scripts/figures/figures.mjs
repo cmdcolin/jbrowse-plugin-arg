@@ -64,6 +64,15 @@ const figures = [
     height: 1000,
   },
   {
+    name: 'prnp-mutation',
+    config: `${BASE}/demo.config.json`,
+    assembly: 'hg38',
+    loc: 'chr20:4,689,000-4,693,000',
+    tracks: ['genes', 'prnp_arg', 'prnp_variants'],
+    height: 1000,
+    hoverMutation: 'prnp_arg',
+  },
+  {
     name: 'prnp-skyline',
     config: `${BASE}/demo.config.json`,
     assembly: 'hg38',
@@ -214,6 +223,44 @@ function drawCallouts(items) {
   }
 }
 
+// Asks the display's own hit test where its mutations are, so the pointer lands
+// on a drawn tick without this script restating the layout. Takes one carried
+// by about ten samples: a clade you can see, not a near-root split.
+async function hoverMutation(page, track) {
+  const target = await page.evaluate(trackId => {
+    const view = window.JBrowseSession.views[0]
+    const display = view.tracks.find(t => t.configuration.trackId === trackId)
+      .displays[0]
+    const rect = document
+      .querySelector(
+        `[data-testid$="-${trackId}"][data-testid^="trackRenderingContainer-"]`,
+      )
+      .getBoundingClientRect()
+    let best
+    for (let x = 0; x < rect.width; x += 2) {
+      for (let y = 0; y < display.height; y += 2) {
+        const hit = display.argHitAt(x, y)
+        if (
+          hit?.mutation &&
+          hit.mutation.siteX > 0 &&
+          hit.mutation.siteX < rect.width &&
+          (!best ||
+            Math.abs(hit.branch.leafCount - 10) <
+              Math.abs(best.hit.branch.leafCount - 10))
+        ) {
+          best = { hit, x, y }
+        }
+      }
+    }
+    return best && { x: rect.left + best.x, y: rect.top + best.y }
+  }, track)
+  if (!target) {
+    throw new Error(`no mutation found to hover on ${track}`)
+  }
+  await page.mouse.move(target.x, target.y)
+  await page.waitForSelector('[data-testid="arg-mutation-guide"]')
+}
+
 async function render(browser, figure) {
   const page = await browser.newPage()
   const pluginRequests = []
@@ -250,6 +297,9 @@ async function render(browser, figure) {
     )
     if (error) {
       throw new Error(`${figure.name}: a track shows an error: ${error}`)
+    }
+    if (figure.hoverMutation) {
+      await hoverMutation(page, figure.hoverMutation)
     }
     if (figure.callouts) {
       await page.evaluate(drawCallouts, figure.callouts)

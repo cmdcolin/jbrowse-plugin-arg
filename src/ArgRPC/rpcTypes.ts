@@ -33,6 +33,15 @@ export interface ArgRegionData {
   parentNode: Int32Array
   /** population every leaf below the edge shares, or -1 where they differ */
   edgePop: Int32Array
+  /**
+   * Mutations on the edges above, one entry each: the edge carrying it, when it
+   * happened (NaN where the file does not say), where its site is, and the
+   * allele change. A mutation above a tree's root has no edge and is left out.
+   */
+  mutationEdge: Int32Array
+  mutationTime: Float32Array
+  mutationPosition: Float64Array
+  mutationAllele: string[]
   numTrees: number
   /** trees in the region before any binning, so the display can say so */
   treesInRegion: number

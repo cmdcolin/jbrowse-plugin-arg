@@ -25,55 +25,95 @@ const ArgTooltip = observer(function ArgTooltip({
   const mouseState = useMouseState(mouseTracker)
   const units =
     timeUnits === 'unknown' || timeUnits === '' ? '' : ` ${timeUnits}`
-  return hoveredFeature === undefined || mouseState === undefined ? null : (
-    <div
-      style={{
-        position: 'absolute',
-        left: mouseState.x + OFFSET_PX,
-        top: mouseState.y + OFFSET_PX,
-        pointerEvents: 'none',
-        background: 'rgba(255,255,255,0.92)',
-        border: '1px solid #ccc',
-        borderRadius: 3,
-        padding: '2px 5px',
-        fontSize: 10,
-        lineHeight: '13px',
-        color: '#222',
-        whiteSpace: 'nowrap',
-        zIndex: 1,
-      }}
-    >
-      {hoveredFeature.branch === undefined ? (
-        <div>
-          TMRCA {time(hoveredFeature.tmrca)}
-          {units}
-        </div>
-      ) : (
-        <>
-          <div>node {hoveredFeature.branch.node}</div>
+  if (hoveredFeature === undefined || mouseState === undefined) {
+    return null
+  }
+  const { branch, mutation } = hoveredFeature
+  // on the right half the card hangs left of the cursor, off the clade the
+  // hover just drew bold beneath it
+  const flip = mouseState.x > model.canvasWidthPx / 2
+  return (
+    <>
+      {mutation === undefined ? null : (
+        // down to the site's own column, which is where a genotype track below
+        // shows the same variant
+        <div
+          data-testid="arg-mutation-guide"
+          style={{
+            position: 'absolute',
+            left: mutation.siteX,
+            top: 0,
+            bottom: 0,
+            borderLeft: '1px dashed #111',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      <div
+        style={{
+          position: 'absolute',
+          left: flip ? mouseState.x - OFFSET_PX : mouseState.x + OFFSET_PX,
+          top: mouseState.y + OFFSET_PX,
+          transform: flip ? 'translateX(-100%)' : undefined,
+          pointerEvents: 'none',
+          background: 'rgba(255,255,255,0.92)',
+          border: '1px solid #ccc',
+          borderRadius: 3,
+          padding: '2px 5px',
+          fontSize: 10,
+          lineHeight: '13px',
+          color: '#222',
+          whiteSpace: 'nowrap',
+          zIndex: 1,
+        }}
+      >
+        {mutation === undefined ? null : (
+          <>
+            <div>
+              <b>mutation {mutation.allele}</b> at{' '}
+              {count(Math.round(mutation.position))}
+            </div>
+            <div>
+              {mutation.time === undefined
+                ? 'time not recorded'
+                : `time ${time(mutation.time)}${units}`}
+            </div>
+          </>
+        )}
+        {branch === undefined ? (
           <div>
-            time {time(hoveredFeature.branch.time)}
+            TMRCA {time(hoveredFeature.tmrca)}
             {units}
           </div>
-          <div>
-            {count(hoveredFeature.branch.leafCount)}{' '}
-            {hoveredFeature.branch.leafCount === 1 ? 'sample' : 'samples'} below
-          </div>
-          {hoveredFeature.branch.populationName === undefined ? null : (
-            <div>{hoveredFeature.branch.populationName}</div>
-          )}
-        </>
-      )}
-      <div>
-        tree {count(Math.round(hoveredFeature.treeStart))}..
-        {count(Math.round(hoveredFeature.treeEnd))}
-      </div>
-      {hoveredFeature.treesInCell > 1 ? (
+        ) : (
+          <>
+            <div>node {branch.node}</div>
+            {mutation === undefined ? (
+              <div>
+                time {time(branch.time)}
+                {units}
+              </div>
+            ) : null}
+            <div>
+              {count(branch.leafCount)}{' '}
+              {branch.leafCount === 1 ? 'sample' : 'samples'} below
+            </div>
+            {branch.populationName === undefined ? null : (
+              <div>{branch.populationName}</div>
+            )}
+          </>
+        )}
         <div>
-          standing in for {count(hoveredFeature.treesInCell)} trees here
+          tree {count(Math.round(hoveredFeature.treeStart))}..
+          {count(Math.round(hoveredFeature.treeEnd))}
         </div>
-      ) : null}
-    </div>
+        {hoveredFeature.treesInCell > 1 ? (
+          <div>
+            standing in for {count(hoveredFeature.treesInCell)} trees here
+          </div>
+        ) : null}
+      </div>
+    </>
   )
 })
 

@@ -37,7 +37,11 @@ export interface ArgRenderState {
   /** leaves need room to separate; below this a tree collapses to its TMRCA */
   pxPerLeaf: number
   numSamples: number
+  showMutations: boolean
+  mutationColor: string
   highlightSamples: number[]
+  /** the hovered branch, whose clade draws bold in the tree it was hovered in */
+  hoveredClade: { treeStart: number; node: number } | undefined
   highlightColor: string
 }
 

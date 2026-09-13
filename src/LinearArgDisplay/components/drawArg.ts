@@ -14,6 +14,7 @@ import type { RenderBlock } from '@jbrowse/render-core/renderBlock'
 
 const GUTTER_PX = 2
 const SPAN_STRIP_PX = 6
+export const MUTATION_TICK_PX = 7
 
 export interface ScreenCell {
   tree: number
@@ -59,6 +60,81 @@ export function screenCells(
       }
     }),
   }
+}
+
+/**
+ * The mutations on one cell's tree. Every edge of a tree packs after every edge
+ * of the tree before it, so "carried by this tree or a later one" is monotone
+ * over the mutation list even though mutations within a tree are in site order.
+ */
+export function mutationsOfCell(data: ArgRegionData, tree: number) {
+  const lowerBound = (edge: number) => {
+    let low = 0
+    let high = data.mutationEdge.length
+    while (low < high) {
+      const mid = (low + high) >>> 1
+      if (data.mutationEdge[mid]! < edge) {
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+    return low
+  }
+  return [
+    lowerBound(data.edgeOffset[tree]!),
+    lowerBound(data.edgeOffset[tree + 1]!),
+  ] as const
+}
+
+/**
+ * Where a mutation is drawn: on its branch's vertical limb, at the time it
+ * happened, or halfway up the drawn branch where the file does not know.
+ */
+export function mutationPoint(
+  data: ArgRegionData,
+  cell: ScreenCell,
+  mutation: number,
+  y: (time: number) => number,
+) {
+  const edge = data.mutationEdge[mutation]!
+  const time = data.mutationTime[mutation]!
+  const bottom = y(data.childTime[edge]!)
+  const top = y(data.parentTime[edge]!)
+  return {
+    x: cell.left + data.childX[edge]! * cell.width,
+    y: Number.isNaN(time)
+      ? (bottom + top) / 2
+      : Math.min(bottom, Math.max(top, y(time))),
+  }
+}
+
+function drawMutations(
+  ctx: Ctx2D,
+  data: ArgRegionData,
+  cells: ScreenCell[],
+  state: ArgRenderState,
+  y: (time: number) => number,
+) {
+  const half = MUTATION_TICK_PX / 2
+  ctx.beginPath()
+  for (const cell of cells) {
+    const [from, to] = mutationsOfCell(data, cell.tree)
+    for (let m = from; m < to; m++) {
+      const point = mutationPoint(data, cell, m, y)
+      ctx.moveTo(point.x - half, point.y)
+      ctx.lineTo(point.x + half, point.y)
+    }
+  }
+  ctx.lineCap = 'round'
+  ctx.strokeStyle = 'white'
+  ctx.lineWidth = 4.5
+  ctx.stroke()
+  ctx.strokeStyle = state.mutationColor
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+  ctx.lineWidth = 1
+  ctx.lineCap = 'butt'
 }
 
 /**
@@ -210,6 +286,45 @@ export function drawArgBlocks(
           elbow(cell, j)
         }
         ctx.stroke()
+      }
+      if (state.hoveredClade) {
+        const { treeStart, node } = state.hoveredClade
+        const cell = cells.find(c => data.treeStart[c.tree] === treeStart)
+        if (cell) {
+          // edges pack in preorder, so a parent is always met before its child
+          const inClade = new Set([node])
+          const clade = new Map<string, number[]>()
+          const to = data.edgeOffset[cell.tree + 1]!
+          for (let j = data.edgeOffset[cell.tree]!; j < to; j++) {
+            const child = data.childNode[j]!
+            if (child === node || inClade.has(data.parentNode[j]!)) {
+              inClade.add(child)
+              const pop = data.edgePop[j]!
+              const color = (pop >= 0 && populationColors[pop]) || branchColor
+              const bucket = clade.get(color)
+              if (bucket) {
+                bucket.push(j)
+              } else {
+                clade.set(color, [j])
+              }
+            }
+          }
+          ctx.lineWidth = 3
+          ctx.lineJoin = 'round'
+          for (const [color, edges] of clade) {
+            ctx.strokeStyle = color
+            ctx.beginPath()
+            for (const j of edges) {
+              elbow(cell, j)
+            }
+            ctx.stroke()
+          }
+          ctx.lineWidth = 1
+          ctx.lineJoin = 'miter'
+        }
+      }
+      if (state.showMutations) {
+        drawMutations(ctx, data, cells, state, y)
       }
       drawSampleSpans(ctx, cells, state)
 

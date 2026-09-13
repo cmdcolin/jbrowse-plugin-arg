@@ -38,6 +38,10 @@ function trees(
     childNode: repeat(Int32Array, [4, 0, 1, 5, 2, 3]),
     parentNode: repeat(Int32Array, [6, 4, 4, 6, 5, 5]),
     edgePop: repeat(Int32Array, [0, 0, 0, 1, 1, 1]),
+    mutationEdge: new Int32Array(0),
+    mutationTime: new Float32Array(0),
+    mutationPosition: new Float64Array(0),
+    mutationAllele: [],
     numTrees: n,
     treesInRegion: n,
     maxNodeTime: 3,
@@ -162,8 +166,11 @@ describe('hovering a sampled cell', () => {
     populationColors: [],
     pxPerLeaf: 5,
     numSamples: 4,
+    showMutations: true,
+    mutationColor: '#111',
     highlightSamples: [],
     highlightColor: '#f00',
+    hoveredClade: undefined,
   }
   const y = (time: number) => timeToY(time, 3, 100, 'linear')
   const hit = (x: number, time: number) =>
@@ -177,6 +184,43 @@ describe('hovering a sampled cell', () => {
       treesInCell: 3,
       branch: { node: 0 },
     })
+  })
+
+  test('a mutation is found on its branch, and names its site', () => {
+    // on tree 1's leaf 0 (edge 7), at site 10 with an unknown time, so drawn
+    // halfway up the leaf's branch from t0 to t1
+    const mutated = {
+      ...data,
+      mutationEdge: new Int32Array([7]),
+      mutationTime: new Float32Array([Number.NaN]),
+      mutationPosition: new Float64Array([10]),
+      mutationAllele: ['G>A'],
+    }
+    const found = findArgHit(
+      2.5,
+      (y(0) + y(1)) / 2,
+      [block],
+      new Map([[0, mutated]]),
+      state,
+    )
+    expect(found).toMatchObject({
+      branch: { node: 0 },
+      mutation: { position: 10, allele: 'G>A', time: undefined, siteX: 10 },
+    })
+  })
+
+  test('a mutation with a known time is drawn at it', () => {
+    const mutated = {
+      ...data,
+      mutationEdge: new Int32Array([7]),
+      mutationTime: new Float32Array([0.25]),
+      mutationPosition: new Float64Array([10]),
+      mutationAllele: ['G>A'],
+    }
+    const at = (time: number) =>
+      findArgHit(2.5, y(time), [block], new Map([[0, mutated]]), state)
+    expect(at(0.25)?.mutation?.time).toBe(0.25)
+    expect(at(0.75)?.mutation).toBeUndefined()
   })
 
   test('branches are found across the cell, not the tree interval', () => {

@@ -1,6 +1,11 @@
 import { clampBlockScissor } from '@jbrowse/render-core/canvas2dUtils'
 
-import { screenCells } from './drawArg.ts'
+import {
+  MUTATION_TICK_PX,
+  mutationPoint,
+  mutationsOfCell,
+  screenCells,
+} from './drawArg.ts'
 import { timeToY } from './timeAxis.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
@@ -14,6 +19,15 @@ export interface ArgBranch {
   populationName: string | undefined
 }
 
+export interface ArgMutation {
+  position: number
+  allele: string
+  /** undefined where the file does not record when it happened */
+  time: number | undefined
+  /** canvas x of the site's genomic position, for a guide down to it */
+  siteX: number
+}
+
 /**
  * What the cursor is over: always a local tree, and the branch within it when
  * the tree was wide enough to be drawn as a dendrogram.
@@ -25,13 +39,16 @@ export interface ArgHit {
   /** trees in the column this tree was drawn to stand for */
   treesInCell: number
   branch: ArgBranch | undefined
+  mutation?: ArgMutation
 }
 
 export function sameArgHit(a: ArgHit, b: ArgHit) {
   return (
     a.treeStart === b.treeStart &&
     a.treeEnd === b.treeEnd &&
-    a.branch?.node === b.branch?.node
+    a.branch?.node === b.branch?.node &&
+    a.mutation?.position === b.mutation?.position &&
+    a.mutation?.allele === b.mutation?.allele
   )
 }
 
@@ -94,10 +111,12 @@ interface Candidate {
   tree: number
   edge: number | undefined
   count: number
+  mutation?: ArgMutation
 }
 
-function toHit({ data, tree, edge, count }: Candidate): ArgHit {
+function toHit({ data, tree, edge, count, mutation }: Candidate): ArgHit {
   const shared = {
+    mutation,
     treesInCell: count,
     treeStart: data.treeStart[tree]!,
     treeEnd: data.treeEnd[tree]!,
@@ -159,9 +178,37 @@ export function findArgHit(
       mouseX < clip.scissorX + clip.scissorW
     ) {
       const { toPx, cells, collapsed } = screenCells(data, block, state)
-      for (const { tree, left, width, count } of cells) {
+      for (const cell of cells) {
+        const { tree, left, width, count } = cell
         if (!near(left, width)) {
           continue
+        }
+        if (state.showMutations) {
+          const [from, to] = mutationsOfCell(data, tree)
+          for (let m = from; m < to; m++) {
+            const point = mutationPoint(data, cell, m, toY)
+            const distance = Math.max(
+              Math.abs(mouseX - point.x) - MUTATION_TICK_PX / 2,
+              Math.abs(mouseY - point.y),
+              0,
+            )
+            if (distance <= bestDistance) {
+              bestDistance = distance
+              const time = data.mutationTime[m]!
+              best = {
+                data,
+                tree,
+                edge: data.mutationEdge[m]!,
+                count,
+                mutation: {
+                  position: data.mutationPosition[m]!,
+                  allele: data.mutationAllele[m]!,
+                  time: Number.isNaN(time) ? undefined : time,
+                  siteX: toPx(data.mutationPosition[m]!),
+                },
+              }
+            }
+          }
         }
         const to = data.edgeOffset[tree + 1]!
         for (let j = data.edgeOffset[tree]!; j < to; j++) {

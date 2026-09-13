@@ -164,6 +164,85 @@ describe('packing a region', () => {
   })
 })
 
+describe('mutations', () => {
+  const region = { tables, maxEdges: 500_000, maxSkylinePoints: 5000 }
+
+  test('the tables read the counts tskit reads', () => {
+    expect(tables.sitePosition.length).toBe(1395)
+    expect(tables.mutationNode.length).toBe(1407)
+    expect(tables.siteMutationOffset.at(-1)).toBe(1407)
+  })
+
+  // `[(site.position, site.ancestral_state, m.derived_state, m.node, m.time,
+  // tree.parent(m.node)) for site in ts.at(pos).sites() for m in
+  // site.mutations]`
+  test.each([
+    [
+      500,
+      [
+        [460, 'T>C', 42, 10282.022, 513],
+        [471, 'C>T', 344, 35834.558, 669],
+        [504, 'C>T', 244, 26301.338, 713],
+        [509, 'G>C', 19, 126.512, 146],
+      ],
+    ],
+    [
+      12345,
+      [
+        [12333, 'G>A', 482, 38711.81, 700],
+        [12341, 'A>C', 118, 3669.303, 293],
+        [12344, 'G>A', 482, 42710.585, 700],
+        [12383, 'T>G', 54, 1815.1, 234],
+      ],
+    ],
+  ] as const)(
+    'the tree at %i carries the mutations tskit puts on it',
+    (pos, expected) => {
+      const data = buildArgRegionData({ ...region, start: pos, end: pos + 1 })
+      expect(data.numTrees).toBe(1)
+      const packed = [...data.mutationEdge].map((edge, i) => [
+        data.mutationPosition[i],
+        data.mutationAllele[i],
+        data.childNode[edge],
+        data.parentNode[edge],
+        data.mutationTime[i]!,
+      ])
+      expect(
+        packed.map(([p, a, child, parent]) => [p, a, child, parent]),
+      ).toEqual(
+        expected.map(([p, a, child, , parent]) => [p, a, child, parent]),
+      )
+      packed.forEach((row, i) => {
+        expect(row[4]).toBeCloseTo(expected[i]![3], 0)
+      })
+    },
+  )
+
+  test('a mutation sits on its branch in time', () => {
+    const data = buildArgRegionData({ ...region, start: 0, end: 5000 })
+    expect(data.mutationEdge.length).toBeGreaterThan(0)
+    data.mutationEdge.forEach((edge, i) => {
+      expect(data.mutationTime[i]!).toBeGreaterThanOrEqual(
+        data.childTime[edge]! - 1e-3,
+      )
+      expect(data.mutationTime[i]!).toBeLessThanOrEqual(
+        data.parentTime[edge]! + 1e-3,
+      )
+    })
+  })
+
+  test('a skyline sends none', () => {
+    const data = buildArgRegionData({
+      tables,
+      start: 0,
+      end: 100000,
+      maxEdges: 10_000,
+      maxSkylinePoints: 200,
+    })
+    expect(data.mutationEdge.length).toBe(0)
+  })
+})
+
 describe('a span with no genealogy', () => {
   // A tree sequence whose topology was retained for one window — or simulated
   // into one, as the chr20 demo is — has trees outside it with no edges at all.

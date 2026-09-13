@@ -37,6 +37,10 @@ function synthetic(): ArgRegionData {
     childNode: new Int32Array([4, 0, 1, 5, 2, 3]),
     parentNode: new Int32Array([6, 4, 4, 6, 5, 5]),
     edgePop: new Int32Array([0, 0, 0, 1, 1, 1]),
+    mutationEdge: new Int32Array(0),
+    mutationTime: new Float32Array(0),
+    mutationPosition: new Float64Array(0),
+    mutationAllele: [],
     numTrees: 1,
     treesInRegion: 1,
     maxNodeTime: 3,
@@ -69,8 +73,11 @@ const state: ArgRenderState = {
   populationColors: [],
   pxPerLeaf: 5,
   numSamples: 4,
+  showMutations: true,
+  mutationColor: '#111',
   highlightSamples: [],
   highlightColor: '#f00',
+  hoveredClade: undefined,
 }
 
 function hit(x: number, y: number, data = synthetic(), where = block) {

@@ -172,10 +172,18 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           populationColors: self.populationColors,
           pxPerLeaf: getConf(self, 'pxPerLeaf'),
           numSamples: self.numSamples,
+          showMutations: getConf(self, 'showMutations'),
+          mutationColor: getConf(self, 'mutationColor'),
           highlightSamples: getConf(self, 'highlightSamples')
             .map(Number)
             .filter(Number.isInteger),
           highlightColor: getConf(self, 'highlightColor'),
+          hoveredClade: self.hoveredFeature?.branch
+            ? {
+                treeStart: self.hoveredFeature.treeStart,
+                node: self.hoveredFeature.branch.node,
+              }
+            : undefined,
         }
       },
     }))

@@ -23,6 +23,12 @@ export interface TreeSequenceTables {
   sitePosition: Float64Array
   mutationSite: Int32Array
   mutationNode: Int32Array
+  /** NaN where the file does not know when a mutation happened */
+  mutationTime: Float64Array
+  mutationDerivedState: string[]
+  siteAncestralState: string[]
+  /** `numSites + 1` offsets into the mutation table, which is sorted by site */
+  siteMutationOffset: Uint32Array
   maxNodeTime: number
   /** one label per population id, from the population table's JSON metadata */
   populationNames: string[]
@@ -92,6 +98,36 @@ function readMetadataNames(store: KastoreStore, prefix: string): string[] {
   return names
 }
 
+function readRaggedText(store: KastoreStore, key: string): string[] {
+  const blob = store.get(key)
+  const offsets = store.get(`${key}_offset`)
+  if (!blob || !offsets) {
+    return []
+  }
+  const bytes = new Uint8Array(blob.buffer, blob.byteOffset, blob.byteLength)
+  const decoder = new TextDecoder()
+  const rows: string[] = []
+  for (let i = 0; i + 1 < offsets.length; i++) {
+    rows.push(
+      decoder.decode(
+        bytes.subarray(Number(offsets[i]!), Number(offsets[i + 1]!)),
+      ),
+    )
+  }
+  return rows
+}
+
+function siteOffsets(mutationSite: Int32Array, numSites: number) {
+  const offsets = new Uint32Array(numSites + 1)
+  for (const site of mutationSite) {
+    offsets[site + 1]!++
+  }
+  for (let i = 0; i < numSites; i++) {
+    offsets[i + 1]! += offsets[i]!
+  }
+  return offsets
+}
+
 function max(values: Float64Array) {
   let result = 0
   for (const value of values) {
@@ -124,6 +160,11 @@ export function readTreeSequenceTables(
   }
   const edgeParent = typed(store, 'edges/parent', Int32Array)
   const nodePopulation = typed(store, 'nodes/population', Int32Array)
+  const sitePosition = typed(store, 'sites/position', Float64Array)
+  const mutationSite = typed(store, 'mutations/site', Int32Array)
+  const mutationTime = store.has('mutations/time')
+    ? typed(store, 'mutations/time', Float64Array)
+    : new Float64Array(mutationSite.length).fill(Number.NaN)
   return {
     sequenceLength,
     timeUnits: decodeText(get(store, 'time_units')),
@@ -140,9 +181,13 @@ export function readTreeSequenceTables(
     edgeChild: typed(store, 'edges/child', Int32Array),
     insertionOrder: typed(store, 'indexes/edge_insertion_order', Int32Array),
     removalOrder: typed(store, 'indexes/edge_removal_order', Int32Array),
-    sitePosition: typed(store, 'sites/position', Float64Array),
-    mutationSite: typed(store, 'mutations/site', Int32Array),
+    sitePosition,
+    mutationSite,
     mutationNode: typed(store, 'mutations/node', Int32Array),
+    mutationTime,
+    mutationDerivedState: readRaggedText(store, 'mutations/derived_state'),
+    siteAncestralState: readRaggedText(store, 'sites/ancestral_state'),
+    siteMutationOffset: siteOffsets(mutationSite, sitePosition.length),
     maxNodeTime: max(nodeTime),
     populationNames: readMetadataNames(store, 'populations'),
     samplePopulations: [

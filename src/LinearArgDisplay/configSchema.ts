@@ -112,6 +112,24 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
+     * a tick on the branch that carries each mutation, at the time it happened,
+     * or halfway up the branch where the file does not record one
+     */
+    showMutations: {
+      type: 'boolean',
+      defaultValue: true,
+      description: 'mark mutations on the branches that carry them',
+    },
+    /**
+     * #slot
+     */
+    mutationColor: {
+      type: 'color',
+      defaultValue: '#111111',
+      description: 'color of a mutation tick',
+    },
+    /**
+     * #slot
      * sample node ids whose path to the root is traced through every local
      * tree, so one haplotype can be followed as recombination moves it
      */

@@ -126,7 +126,8 @@ chromosome of the assembly.
 Display slots: `colorBy` (`population` or `none`), `branchColor`,
 `skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
 (`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
-`sampleSpanColor`, `highlightSamples` and `highlightColor`.
+`sampleSpanColor`, `showMutations`, `mutationColor`, `highlightSamples` and
+`highlightColor`.
 
 `highlightSamples` takes sample node ids as strings. In every tree it draws each
 of those samples' own branch in `highlightColor`, and draws the branches that
@@ -157,10 +158,26 @@ an edge.
 
 ## Hovering
 
-Hovering a branch reports the node, its time in the file's own units, how many
-sample leaves sit below it, the population its clade shares where it has one,
-and the local tree's interval. A tree too narrow for a dendrogram was drawn as
-its TMRCA and hits as that, which is also what a skyline reports.
+Hovering a branch draws its whole clade bold and reports the node, its time in
+the file's own units, how many sample leaves sit below it, the population its
+clade shares where it has one, and the local tree's interval. A tree too narrow
+for a dendrogram was drawn as its TMRCA and hits as that, which is also what a
+skyline reports.
+
+## Mutations
+
+Each mutation is a tick on the branch that carries it. The tick sits at the time
+the mutation happened, or halfway up the branch where the file does not record
+one; tsinfer and tsdate output, like the PRNP demo, does not. Hovering a tick
+names the allele change and its site, bolds the clade of samples that inherit
+it, and drops a dashed guide to the site's genomic position.
+
+![Hovering a mutation at PRNP: its eight carriers drawn bold, and a guide down to its site above the genotype matrix](img/prnp-mutation.png)
+
+In the demo the guide lands where the genotype matrix's connector line for that
+site starts, so the clade in the tree and the carriers in the matrix are the
+same haplotypes. `showMutations` turns the ticks off, and `mutationColor` sets
+their color.
 
 The population legend appears only when something on screen is actually drawn as
 a tree. Every tree narrower than its leaves need is painted as one TMRCA segment
@@ -247,9 +264,6 @@ rather than by replaying every breakpoint before it.
   which is the problem lorax's backend exists to solve.
 - **`.trees.tsz` (tszip) is not supported.** Detected and reported, not
   decompressed. Run `tsunzip` first.
-- **Mutations are not drawn.** The site and mutation tables are parsed and
-  available; nothing plots them. This is the gap that would most improve the
-  demo above — a mutation drawn on the branch that carries it is the explicit
-  link between a clade in the tree and a column in the genotype matrix.
+- **A mutation above a tree's root is not drawn.** It has no branch to sit on.
 - **Canvas2D only.** Well inside the threshold where a GPU path would earn its
   keep (~100K features/frame); the edge budget keeps a frame under that.
