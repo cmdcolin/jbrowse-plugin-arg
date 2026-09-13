@@ -79,7 +79,10 @@ run('aws', [
   `/demos/arg/${BUNDLE}`,
 ])
 
-for (const url of [`${PUBLIC}/${shortDigest}/${BUNDLE}`, `${PUBLIC}/${BUNDLE}`]) {
+for (const url of [
+  `${PUBLIC}/${shortDigest}/${BUNDLE}`,
+  `${PUBLIC}/${BUNDLE}`,
+]) {
   const response = await fetch(url, { cache: 'no-store' })
   if (!response.ok) {
     throw new Error(`HTTP ${response.status} for ${url}`)

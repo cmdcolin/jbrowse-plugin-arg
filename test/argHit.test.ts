@@ -68,6 +68,8 @@ const state: ArgRenderState = {
   populationColors: [],
   pxPerLeaf: 5,
   numSamples: 4,
+  highlightSamples: [],
+  highlightColor: '#f00',
 }
 
 function hit(x: number, y: number, data = synthetic(), where = block) {

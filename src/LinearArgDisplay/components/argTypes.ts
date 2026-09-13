@@ -35,6 +35,8 @@ export interface ArgRenderState {
   /** leaves need room to separate; below this a tree collapses to its TMRCA */
   pxPerLeaf: number
   numSamples: number
+  highlightSamples: number[]
+  highlightColor: string
 }
 
 export type ArgRenderingBackend = PerRegionRenderingBackend<

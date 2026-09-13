@@ -11,6 +11,7 @@ import { installUpload } from '@jbrowse/render-core/installUpload'
 import { dendrogramPx, toTimeScale } from './components/argTypes.ts'
 import { findArgHit, sameArgHit } from './components/findArgHit.ts'
 import { populationColor } from './components/palette.ts'
+import { layoutTreeCells } from './components/treeCells.ts'
 
 import type { ArgRegionData } from '../ArgRPC/rpcTypes.ts'
 import type {
@@ -108,27 +109,17 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
     }))
     .views(self => ({
       /**
-       * Colors indexed by population id, and empty when the display is not
-       * coloring by population — the renderer reads the emptiness rather than
-       * a second flag.
-       */
-      /**
        * Whether anything on screen is actually drawn as a tree. Every tree
        * narrower than its leaves need is painted as a TMRCA segment in one
        * color, so at that zoom no branch carries a population and a legend
        * would be advertising an encoding that is not on screen.
        */
       get hasDendrogram() {
-        const minSpan =
+        const minWidthBp =
           dendrogramPx(self.numSamples, getConf(self, 'pxPerLeaf')) *
           self.view.bpPerPx
         return [...self.rpcDataMap.values()].some(
-          data =>
-            data.detail === 'trees' &&
-            data.treeStart.some(
-              (start, i) =>
-                data.edgeCount[i]! > 0 && data.treeEnd[i]! - start >= minSpan,
-            ),
+          data => layoutTreeCells(data, minWidthBp).cells.length > 0,
         )
       },
       get populationColors(): string[] {
@@ -180,6 +171,10 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           populationColors: self.populationColors,
           pxPerLeaf: getConf(self, 'pxPerLeaf'),
           numSamples: self.numSamples,
+          highlightSamples: getConf(self, 'highlightSamples')
+            .map(Number)
+            .filter(Number.isInteger),
+          highlightColor: getConf(self, 'highlightColor'),
         }
       },
     }))

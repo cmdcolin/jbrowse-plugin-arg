@@ -5,6 +5,7 @@ import {
 
 import { dendrogramPx } from './argTypes.ts'
 import { timeAxisTicks, timeToY } from './timeAxis.ts'
+import { layoutTreeCells } from './treeCells.ts'
 
 import type { ArgRegionData } from '../../ArgRPC/rpcTypes.ts'
 import type { ArgRenderState } from './argTypes.ts'
@@ -13,13 +14,44 @@ import type { RenderBlock } from '@jbrowse/render-core/renderBlock'
 
 const GUTTER_PX = 2
 
+export interface ScreenCell {
+  tree: number
+  left: number
+  width: number
+}
+
 /**
- * A faint cell behind each local tree, inset so neighbours are separated by a
+ * The trees of one block in screen pixels: the dendrogram cells, and the
+ * trees too narrow for one, which draw as their TMRCA. The painters and the hit
+ * test all read this, so what is drawn and what hovers cannot disagree.
+ */
+export function screenCells(
+  data: ArgRegionData,
+  block: RenderBlock,
+  state: Pick<ArgRenderState, 'numSamples' | 'pxPerLeaf'>,
+) {
+  const { start, end, screenStartPx, screenEndPx, reversed } = block
+  const toPx = (bp: number) =>
+    bpToScreenPx(bp, start, end, screenStartPx, screenEndPx, reversed)
+  const bpPerPx = (end - start) / Math.abs(screenEndPx - screenStartPx)
+  const minWidthBp = dendrogramPx(state.numSamples, state.pxPerLeaf) * bpPerPx
+  const { cells, collapsed } = layoutTreeCells(data, minWidthBp)
+  return {
+    toPx,
+    collapsed,
+    cells: cells.map(cell => {
+      const a = toPx(cell.start)
+      const b = toPx(cell.end)
+      return { tree: cell.tree, left: Math.min(a, b), width: Math.abs(b - a) }
+    }),
+  }
+}
+
+/**
+ * A faint cell behind each dendrogram, inset so neighbours are separated by a
  * gutter rather than sharing an edge. Adjacent trees differ only by the subtree
  * a recombination moved and are laid out on one leaf order, so without this
- * they read as a single continuous drawing. Only trees drawn as dendrograms get
- * one: a run of collapsed trees is a skyline, and one cell per pixel is a
- * moire.
+ * they read as a single continuous drawing.
  */
 export function drawTreeCells(
   ctx: Ctx2D,
@@ -27,9 +59,7 @@ export function drawTreeCells(
   blocks: RenderBlock[],
   state: ArgRenderState,
 ) {
-  const { canvasWidth, canvasHeight, treeCellColor, pxPerLeaf, numSamples } =
-    state
-  const minWidth = dendrogramPx(numSamples, pxPerLeaf)
+  const { canvasWidth, canvasHeight, treeCellColor } = state
   ctx.fillStyle = treeCellColor
   forEachClippedBlock(
     ctx,
@@ -38,33 +68,8 @@ export function drawTreeCells(
     canvasHeight,
     block => regions.get(block.displayedRegionIndex),
     (data, block) => {
-      const { start, end, screenStartPx, screenEndPx, reversed } = block
-      for (let i = 0; i < data.numTrees; i++) {
-        const a = bpToScreenPx(
-          data.treeStart[i]!,
-          start,
-          end,
-          screenStartPx,
-          screenEndPx,
-          reversed,
-        )
-        const b = bpToScreenPx(
-          data.treeEnd[i]!,
-          start,
-          end,
-          screenStartPx,
-          screenEndPx,
-          reversed,
-        )
-        const width = Math.abs(b - a)
-        if (data.edgeCount[i] !== 0 && width >= minWidth) {
-          ctx.fillRect(
-            Math.min(a, b) + GUTTER_PX,
-            0,
-            width - 2 * GUTTER_PX,
-            canvasHeight,
-          )
-        }
+      for (const { left, width } of screenCells(data, block, state).cells) {
+        ctx.fillRect(left + GUTTER_PX, 0, width - 2 * GUTTER_PX, canvasHeight)
       }
     },
   )
@@ -86,27 +91,11 @@ export function drawTimeGridlines(ctx: Ctx2D, state: ArgRenderState) {
 /**
  * Paint the local trees of every visible block.
  *
- * A tree occupies the pixels its genomic interval occupies, and its nodes were
- * laid out normalized to that interval, so the whole ARG reads as a row of
- * dendrograms that get narrower as recombination breaks them up. Trees too
- * narrow to show topology collapse to a TMRCA tick, and a region the worker
- * decided to send as a skyline draws as one TMRCA line.
+ * Each cell draws one tree across the pixels of its stretch of genome, with the
+ * nodes laid out normalized to that width. Trees too narrow for a cell of their
+ * own collapse to a TMRCA step line, and a region the worker sent as a skyline
+ * draws as nothing else.
  */
-/** which tree an edge index belongs to, by binary search over the offsets */
-function treeOfEdge(data: ArgRegionData, edge: number) {
-  let low = 0
-  let high = data.numTrees - 1
-  while (low < high) {
-    const mid = (low + high + 1) >>> 1
-    if (data.edgeOffset[mid]! <= edge) {
-      low = mid
-    } else {
-      high = mid - 1
-    }
-  }
-  return low
-}
-
 export function drawArgBlocks(
   ctx: Ctx2D,
   regions: ReadonlyMap<number, ArgRegionData>,
@@ -121,10 +110,10 @@ export function drawArgBlocks(
     branchColor,
     skylineColor,
     populationColors,
-    pxPerLeaf,
-    numSamples,
+    highlightSamples,
+    highlightColor,
   } = state
-  const minWidth = dendrogramPx(numSamples, pxPerLeaf)
+  const y = (time: number) => timeToY(time, maxTime, canvasHeight, timeScale)
   forEachClippedBlock(
     ctx,
     blocks,
@@ -132,91 +121,111 @@ export function drawArgBlocks(
     canvasHeight,
     block => regions.get(block.displayedRegionIndex),
     (data, block) => {
-      const { start, end, screenStartPx, screenEndPx, reversed } = block
-      const toPx = (bp: number) =>
-        bpToScreenPx(bp, start, end, screenStartPx, screenEndPx, reversed)
-      const y = (time: number) =>
-        timeToY(time, maxTime, canvasHeight, timeScale)
+      const { toPx, cells, collapsed } = screenCells(data, block, state)
 
-      // A tree too narrow to separate its leaves is drawn as the one thing
-      // that still reads at that width: the height its root coalesces at. The
-      // segments join into one step line, so a run of sub-pixel trees is a
-      // continuous skyline rather than a row of dashes with gaps between them.
       ctx.strokeStyle = skylineColor
       ctx.lineWidth = 1
       ctx.beginPath()
-      let joined = false
-      let dendrograms = 0
-      for (let i = 0; i < data.numTrees; i++) {
-        if (data.edgeCount[i] === 0) {
-          joined = false
-          continue
-        }
+      let previous = -2
+      for (const i of collapsed) {
         const from = toPx(data.treeStart[i]!)
-        const to = toPx(data.treeEnd[i]!)
-        if (data.detail === 'trees' && Math.abs(to - from) >= minWidth) {
-          dendrograms++
-          joined = false
-          continue
-        }
         const top = y(data.tmrca[i]!)
-        if (joined) {
+        if (i === previous + 1) {
           ctx.lineTo(from, top)
         } else {
           ctx.moveTo(from, top)
-          joined = true
         }
-        ctx.lineTo(to, top)
+        ctx.lineTo(toPx(data.treeEnd[i]!), top)
+        previous = i
       }
       ctx.stroke()
-      if (dendrograms === 0) {
-        return
-      }
 
-      // One stroke per color rather than one per edge: a path is batched, and
-      // switching strokeStyle mid-path would repaint everything drawn so far in
-      // the new color. Edges are bucketed by the population under them first,
-      // so the whole block is two passes regardless of how many populations
-      // are on screen.
-      const buckets = new Map<string, number[]>()
-      for (let i = 0; i < data.numTrees; i++) {
-        const a = toPx(data.treeStart[i]!)
-        const b = toPx(data.treeEnd[i]!)
-        if (Math.abs(b - a) < minWidth) {
-          continue
-        }
-        const to = data.edgeOffset[i + 1]!
-        for (let j = data.edgeOffset[i]!; j < to; j++) {
-          const pop = data.edgePop[j]
-          const color =
-            populationColors.length > 0 && pop !== undefined && pop >= 0
-              ? (populationColors[pop % populationColors.length] ?? branchColor)
-              : branchColor
+      // One stroke per color: switching strokeStyle mid-path would repaint
+      // everything drawn so far in the new color.
+      const buckets = new Map<string, [ScreenCell, number][]>()
+      for (const cell of cells) {
+        const to = data.edgeOffset[cell.tree + 1]!
+        for (let j = data.edgeOffset[cell.tree]!; j < to; j++) {
+          const pop = data.edgePop[j]!
+          const color = (pop >= 0 && populationColors[pop]) || branchColor
           const bucket = buckets.get(color)
           if (bucket) {
-            bucket.push(j)
+            bucket.push([cell, j])
           } else {
-            buckets.set(color, [j])
+            buckets.set(color, [[cell, j]])
           }
         }
+      }
+      const elbow = ({ left, width }: ScreenCell, j: number) => {
+        const childX = left + data.childX[j]! * width
+        const parentY = y(data.parentTime[j]!)
+        ctx.moveTo(childX, y(data.childTime[j]!))
+        ctx.lineTo(childX, parentY)
+        ctx.lineTo(left + data.parentX[j]! * width, parentY)
       }
       for (const [color, edges] of buckets) {
         ctx.strokeStyle = color
         ctx.beginPath()
-        for (const j of edges) {
-          const tree = treeOfEdge(data, j)
-          const a = toPx(data.treeStart[tree]!)
-          const b = toPx(data.treeEnd[tree]!)
-          const left = Math.min(a, b)
-          const width = Math.abs(b - a)
-          const childX = left + data.childX[j]! * width
-          const parentX = left + data.parentX[j]! * width
-          const parentY = y(data.parentTime[j]!)
-          ctx.moveTo(childX, y(data.childTime[j]!))
-          ctx.lineTo(childX, parentY)
-          ctx.lineTo(parentX, parentY)
+        for (const [cell, j] of edges) {
+          elbow(cell, j)
         }
         ctx.stroke()
+      }
+
+      // A traced sample's own branch, and the branches it first joins drawn
+      // bold in their own colors: who a haplotype's nearest relatives are is
+      // what changes along the genome, and a path to the root always ends at
+      // the same place.
+      if (highlightSamples.length > 0 && cells.length > 0) {
+        const joined = new Map<string, [ScreenCell, number][]>()
+        const own: [ScreenCell, number][] = []
+        for (const cell of cells) {
+          const to = data.edgeOffset[cell.tree + 1]!
+          for (const sample of highlightSamples) {
+            let parent = -1
+            for (let j = data.edgeOffset[cell.tree]!; j < to; j++) {
+              if (data.childNode[j] === sample) {
+                parent = data.parentNode[j]!
+                own.push([cell, j])
+              }
+            }
+            for (let j = data.edgeOffset[cell.tree]!; j < to; j++) {
+              if (
+                data.parentNode[j] === parent &&
+                data.childNode[j] !== sample
+              ) {
+                const pop = data.edgePop[j]!
+                const color = (pop >= 0 && populationColors[pop]) || branchColor
+                const bucket = joined.get(color)
+                if (bucket) {
+                  bucket.push([cell, j])
+                } else {
+                  joined.set(color, [[cell, j]])
+                }
+              }
+            }
+          }
+        }
+        ctx.lineJoin = 'round'
+        ctx.lineCap = 'round'
+        for (const [color, edges] of [
+          ...joined,
+          [highlightColor, own] as const,
+        ]) {
+          ctx.beginPath()
+          for (const [cell, j] of edges) {
+            elbow(cell, j)
+          }
+          ctx.strokeStyle = 'white'
+          ctx.lineWidth = 6
+          ctx.stroke()
+          ctx.strokeStyle = color
+          ctx.lineWidth = 3
+          ctx.stroke()
+        }
+        ctx.lineWidth = 1
+        ctx.lineJoin = 'miter'
+        ctx.lineCap = 'butt'
       }
     },
   )

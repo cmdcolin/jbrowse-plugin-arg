@@ -102,6 +102,24 @@ export const configSchema = ConfigurationSchema(
     },
     /**
      * #slot
+     * sample node ids whose path to the root is traced through every local
+     * tree, so one haplotype can be followed as recombination moves it
+     */
+    highlightSamples: {
+      type: 'stringArray',
+      defaultValue: [],
+      description: 'sample node ids to trace to the root in every tree',
+    },
+    /**
+     * #slot
+     */
+    highlightColor: {
+      type: 'color',
+      defaultValue: '#d6002a',
+      description: 'color of a traced sample lineage',
+    },
+    /**
+     * #slot
      * a tree narrower than this times its leaf count draws as its TMRCA
      */
     pxPerLeaf: {

@@ -26,7 +26,10 @@
       "assemblyNames": ["sim"],
       "adapter": {
         "type": "ArgAdapter",
-        "treesLocation": { "uri": "small.trees", "locationType": "UriLocation" },
+        "treesLocation": {
+          "uri": "small.trees",
+          "locationType": "UriLocation"
+        },
         "refName": "chr1"
       }
     }

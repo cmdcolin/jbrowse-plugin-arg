@@ -11,20 +11,19 @@ gets wrong here is the display's fault.
 50 haplotypes over 10 Mb, `recombination_rate=1e-8`, `Ne=10000`, seed 42, giving
 15,321 local trees. The edge coordinates are then shifted onto **hg38
 chr20:1,000,000-11,000,000** and `sequence_length` set to chr20's real length,
-so the genealogy sits under the real RefSeq genes and the rest of the
-chromosome reads as "no genealogy here". `scripts/simulate_chr20_demo.py`
-regenerates it.
+so the genealogy sits under the real RefSeq genes and the rest of the chromosome
+reads as "no genealogy here". `scripts/simulate_chr20_demo.py` regenerates it.
 
-It is not a genealogy of real people. The track is named `Simulated ARG
-(msprime, 50 haplotypes)` and should keep saying so.
+It is not a genealogy of real people. The track is named
+`Simulated ARG (msprime, 50 haplotypes)` and should keep saying so.
 
 ## Live links
 
-| view                        | what it shows                            | open                       |
-| --------------------------- | ----------------------------------------- | -------------------------- |
-| chr20:1,900,000..1,920,000  | local trees as dendrograms, under SIRPA  | [launch][sim-trees]        |
-| chr20:1,850,000..2,050,000  | the same trees, as a TMRCA skyline       | [launch][sim-mixed]        |
-| chr20:1,000,000..11,000,000 | all 15,321 local trees as one skyline    | [launch][sim-skyline]      |
+| view                        | what it shows                           | open                  |
+| --------------------------- | --------------------------------------- | --------------------- |
+| chr20:1,900,000..1,920,000  | local trees as dendrograms, under SIRPA | [launch][sim-trees]   |
+| chr20:1,850,000..2,050,000  | the same trees, as a TMRCA skyline      | [launch][sim-mixed]   |
+| chr20:1,000,000..11,000,000 | all 15,321 local trees as one skyline   | [launch][sim-skyline] |
 
 [sim-trees]:
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A1%2C900%2C000-1%2C920%2C000&tracks=genes%2Cchr20_arg

@@ -17,17 +17,17 @@ it in the browser, so a file behind any static URL works.
 
 ## Live demo
 
-Nothing to install. An inferred human genealogy at *PRNP* on hg38 chr20 — 23
+Nothing to install. An inferred human genealogy at _PRNP_ on hg38 chr20 — 23
 1000 Genomes individuals across six populations plus a Vindija Neanderthal and a
-Denisovan, 50 haplotypes — cut out of the [unified genealogy of modern and
-ancient genomes](https://zenodo.org/records/5512994) (Wohns et al. 2022,
-`tsinfer` + `tsdate`, GRCh38). Branches are colored by the population every leaf
-under them belongs to, and the track below is the 1000 Genomes genotype matrix
-for **the same individuals**, so an allele pattern and the clade that carries it
-are stacked on one screen.
+Denisovan, 50 haplotypes — cut out of the
+[unified genealogy of modern and ancient genomes](https://zenodo.org/records/5512994)
+(Wohns et al. 2022, `tsinfer` + `tsdate`, GRCh38). Branches are colored by the
+population every leaf under them belongs to, and the track below is the 1000
+Genomes genotype matrix for **the same individuals**, so an allele pattern and
+the clade that carries it are stacked on one screen.
 
 | view                       | what it shows                                          | open                         |
-| -------------------------- | ------------------------------------------------------- | ---------------------------- |
+| -------------------------- | ------------------------------------------------------ | ---------------------------- |
 | chr20:4,689,000..4,693,000 | local trees at PRNP, over the matching genotype matrix | [launch][arg-demo-prnp]      |
 | chr20:4,200,000..5,200,000 | the surrounding 1 Mb as a TMRCA skyline                | [launch][arg-demo-prnp-wide] |
 
@@ -37,8 +37,8 @@ are stacked on one screen.
   https://jbrowse.org/code/jb2/main/?config=https%3A%2F%2Fjbrowse.org%2Fdemos%2Farg%2Fconfig.json&assembly=hg38&loc=chr20%3A4%2C200%2C000-5%2C200%2C000&tracks=genes%2Cprnp_arg%2Cprnp_variants
 
 There is a simulated dataset too — an msprime coalescent with no inference
-between it and the truth, which is the one thing the real data cannot offer.
-It has its own page: [docs/simulated.md](docs/simulated.md).
+between it and the truth, which is the one thing the real data cannot offer. It
+has its own page: [docs/simulated.md](docs/simulated.md).
 
 **The links point at `jb2/main`, not `jb2/latest`, and they have to.** This
 plugin composes the v5 display ABI — `MultiRegionDisplayMixin` and
@@ -117,10 +117,10 @@ sample leaves sit below it, the population its clade shares where it has one,
 and the local tree's interval. A tree too narrow for a dendrogram was drawn as
 its TMRCA and hits as that, which is also what a skyline reports.
 
-The population legend appears only when something on screen is actually drawn
-as a tree. Every tree narrower than its leaves need is painted as one TMRCA
-segment in a single color, so at that zoom a legend would be advertising an
-encoding that is not on screen.
+The population legend appears only when something on screen is actually drawn as
+a tree. Every tree narrower than its leaves need is painted as one TMRCA segment
+in a single color, so at that zoom a legend would be advertising an encoding
+that is not on screen.
 
 ## Coloring by population
 
@@ -144,8 +144,8 @@ region unless doing so would exceed `maxEdges` (300k), in which case it sends a
 TMRCA skyline binned to `maxSkylinePoints`. Zoom never enters the fetch inputs,
 so panning and zooming inside a fetched region repaints without refetching.
 
-Node x positions come back normalized to 0..1 *within each tree's own genomic
-interval*, so the renderer needs only that interval's pixel span to place them.
+Node x positions come back normalized to 0..1 _within each tree's own genomic
+interval_, so the renderer needs only that interval's pixel span to place them.
 Node times are absolute, and the vertical axis is scaled to the oldest node in
 the whole file rather than to what is on screen — the axis does not move as you
 pan.
@@ -175,8 +175,8 @@ npx @jbrowse/capture --instance http://localhost:8899 \
 `pnpm betabuild` gates on typecheck, tests and build, uploads the bundle to
 `demos/arg/<hash>/` (immutable) and `demos/arg/` (60-second cache), invalidates
 CloudFront, and then reads back what the CDN actually serves and compares
-digests — the failure it exists to catch is a demo config naming a URL that
-404s or serves yesterday's bundle. The demo config itself lives in the
+digests — the failure it exists to catch is a demo config naming a URL that 404s
+or serves yesterday's bundle. The demo config itself lives in the
 jbrowse-components repo at `demos/arg/config.json` and deploys with
 `scripts/deploy-demo.sh arg/config.json`; `scripts/simulate_chr20_demo.py` here
 regenerates the tree sequence behind it.
