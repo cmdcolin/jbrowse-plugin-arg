@@ -151,9 +151,20 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           // that have samples: a file can declare hundreds of populations and
           // carry twenty, and keying the palette on the id would hand two of
           // those twenty the same hue for no reason.
-          self.samplePopulations.forEach((id, rank) => {
-            colors[id] = populationColor(rank)
-          })
+          const domain: string[] = getConf(self, 'colorDomain')
+          const range: string[] = getConf(self, 'colorRange')
+          if (domain.length > 0) {
+            self.samplePopulations.forEach(id => {
+              const rank = domain.indexOf(self.populationNames[id] ?? '')
+              if (rank >= 0) {
+                colors[id] = range[rank] ?? populationColor(rank)
+              }
+            })
+          } else {
+            self.samplePopulations.forEach((id, rank) => {
+              colors[id] = populationColor(rank)
+            })
+          }
         }
         return colors
       },

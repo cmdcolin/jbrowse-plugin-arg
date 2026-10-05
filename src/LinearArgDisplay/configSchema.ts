@@ -14,7 +14,7 @@ export const configSchema = ConfigurationSchema(
      */
     height: {
       type: 'number',
-      defaultValue: 250,
+      defaultValue: 200,
       description: 'height of the display in pixels',
     },
     /**
@@ -85,6 +85,26 @@ export const configSchema = ConfigurationSchema(
       model: types.enumeration('ArgColorBy', ['none', 'population']),
       defaultValue: 'population',
       description: 'what the branch color means',
+    },
+    /**
+     * #slot
+     * population names to color; every other population stays in
+     * `branchColor`. Empty colors them all
+     */
+    colorDomain: {
+      type: 'stringArray',
+      defaultValue: [],
+      description: 'population names to color, in order; empty colors all',
+    },
+    /**
+     * #slot
+     * colors for `colorDomain`, in the same order; the built-in palette fills
+     * any it leaves out
+     */
+    colorRange: {
+      type: 'stringArray',
+      defaultValue: [],
+      description: 'colors for colorDomain, in the same order',
     },
     /**
      * #slot
