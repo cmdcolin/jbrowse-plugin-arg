@@ -51,10 +51,11 @@ tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
 Display slots: `draw` (`both`, `trees` or `tmrca`), `colorBy` (`population` or
-`none`), `branchColor`, `skylineColor`, `gridlineColor`, `separateTrees`,
-`treeCellColor`, `timeScale` (`log` or `linear`), `pxPerLeaf`, `maxEdges`,
-`maxSkylinePoints`, `height`, `sampleSpanColor`, `showMutations`,
-`mutationColor`, `highlightSamples` and `highlightColor`.
+`none`), `colorDomain`, `colorRange`, `branchColor`, `skylineColor`,
+`gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale` (`log` or
+`linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
+`sampleSpanColor`, `showMutations`, `mutationColor`, `highlightSamples` and
+`highlightColor`.
 
 `highlightSamples` takes sample node ids as strings. In every tree it draws each
 of those samples' own branch in `highlightColor`, and draws the branches that
@@ -113,6 +114,16 @@ subtree is a claim â€” these haplotypes coalesce before they meet anyone else â€
 and the black above it is where that stops being true. The population comes from
 the tree sequence's own population table metadata, so a file with no such
 metadata simply draws one color.
+
+To color only some populations, name them in `colorDomain`; the rest stay in
+`branchColor`. `colorRange` sets their colors in the same order:
+
+```json
+{
+  "colorDomain": ["YRI", "CEU", "CHB"],
+  "colorRange": ["#0072b2", "#e69f00", "#009e73"]
+}
+```
 
 ## How detail is decided
 

@@ -147,6 +147,8 @@ async function serve() {
     for (const display of track.displays ?? []) {
       if (display.type === 'LinearArgDisplay') {
         display.showMutations = false
+        display.height = 230
+        display.colorDomain = ['YRI', 'CEU', 'CHB']
       }
     }
   }
