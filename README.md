@@ -41,9 +41,9 @@ display ABI, which 4.3.0 lacks.
 
 - [Display reference](docs/display.md): draw modes, settings, hover, mutations,
   population colors, level of detail
-- [Selective sweep](docs/sweep.md) and
-  [introgression painting](docs/introgression.md): worked examples with live
-  links
+- [Selective sweep](docs/sweep.md): a worked example with a live link
+- [Introgression painting](docs/introgression.md): a worked example with a live
+  link
 - [Simulated demo](docs/simulated.md)
 - [Development](docs/development.md): building, figures, publishing, limits
 
