@@ -156,12 +156,19 @@ bar. Point your own deployment at a 5.0.0-beta build.
 
 ## What it draws
 
-The picture changes with zoom, without a mode switch. A tree draws its topology
-once it has `pxPerLeaf` pixels per sample (2 by default). Trees narrower than
-that are grouped into columns of that width. A column holding up to four trees
-draws the one that spans the most sequence. A busier column collapses to its
-TMRCA, so dendrograms grow out of the skyline as you zoom in rather than
-replacing it.
+The `draw` setting picks what every tree in the view looks like, and the track
+menu's **Draw** submenu switches it:
+
+- `both` (default) — the TMRCA line runs under every tree across the whole
+  view, and dendrograms sit on it where they fit.
+- `trees` — dendrograms only. A tree too narrow for one still falls back to its
+  TMRCA segment, since there is nothing else to draw.
+- `tmrca` — the line alone, at every zoom.
+
+A tree draws its topology once it has `pxPerLeaf` pixels per sample (2 by
+default). Trees narrower than that are grouped into columns of that width. A
+column holding up to four trees draws the one that spans the most sequence. A
+busier column collapses to its TMRCA.
 
 A column's tree is a stand-in, and the display says so. A strip along the foot
 of its cell darkens the interval that tree really spans, in `sampleSpanColor`,
@@ -197,7 +204,7 @@ tops of the dendrograms above. Here it runs across the prion gene cluster.
 tree sequence covers one sequence; without this the same ARG would draw on every
 chromosome of the assembly.
 
-Display slots: `colorBy` (`population` or `none`), `branchColor`,
+Display slots: `draw` (`both`, `trees` or `tmrca`), `colorBy` (`population` or `none`), `branchColor`,
 `skylineColor`, `gridlineColor`, `separateTrees`, `treeCellColor`, `timeScale`
 (`log` or `linear`), `pxPerLeaf`, `maxEdges`, `maxSkylinePoints`, `height`,
 `sampleSpanColor`, `showMutations`, `mutationColor`, `highlightSamples` and

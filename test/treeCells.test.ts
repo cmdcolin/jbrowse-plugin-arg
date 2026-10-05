@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
+import { screenCells } from '../src/LinearArgDisplay/components/drawArg.ts'
 import { findArgHit } from '../src/LinearArgDisplay/components/findArgHit.ts'
 import { timeToY } from '../src/LinearArgDisplay/components/timeAxis.ts'
 import { layoutTreeCells } from '../src/LinearArgDisplay/components/treeCells.ts'
@@ -154,6 +155,7 @@ describe('hovering a sampled cell', () => {
     reversed: false,
   }
   const state: ArgRenderState = {
+    draw: 'trees',
     canvasWidth: 100,
     canvasHeight: 100,
     maxTime: 3,
@@ -226,5 +228,41 @@ describe('hovering a sampled cell', () => {
   test('branches are found across the cell, not the tree interval', () => {
     // leaf 3 at 0.875 of 20px lies beyond the drawn tree's own 14bp end
     expect(hit(17.5, 0.5)).toMatchObject({ branch: { node: 3 } })
+  })
+})
+
+describe('draw modes', () => {
+  const data = trees([
+    [0, 6],
+    [6, 14],
+    [14, 20],
+  ])
+  const block: RenderBlock = {
+    displayedRegionIndex: 0,
+    start: 0,
+    end: 100,
+    screenStartPx: 0,
+    screenEndPx: 100,
+    reversed: false,
+  }
+  const layout = (draw: 'both' | 'trees' | 'tmrca') =>
+    screenCells(data, block, { draw, numSamples: 4, pxPerLeaf: 5 })
+
+  test('tmrca draws no dendrogram and lines every tree', () => {
+    const { cells, skyline } = layout('tmrca')
+    expect(cells).toEqual([])
+    expect(skyline).toEqual([0, 1, 2])
+  })
+
+  test('both lines every tree under the dendrograms', () => {
+    const { cells, skyline } = layout('both')
+    expect(cells).toHaveLength(1)
+    expect(skyline).toEqual([0, 1, 2])
+  })
+
+  test('trees lines only the trees it cannot draw', () => {
+    const { cells, skyline } = layout('trees')
+    expect(cells).toHaveLength(1)
+    expect(skyline).toEqual([])
   })
 })

@@ -177,7 +177,7 @@ export function findArgHit(
       mouseX >= clip.scissorX &&
       mouseX < clip.scissorX + clip.scissorW
     ) {
-      const { toPx, cells, collapsed } = screenCells(data, block, state)
+      const { toPx, cells, skyline } = screenCells(data, block, state)
       for (const cell of cells) {
         const { tree, left, width, count } = cell
         if (!near(left, width)) {
@@ -238,7 +238,7 @@ export function findArgHit(
           }
         }
       }
-      for (const tree of collapsed) {
+      for (const tree of skyline) {
         const a = toPx(data.treeStart[tree]!)
         const b = toPx(data.treeEnd[tree]!)
         const left = Math.min(a, b)

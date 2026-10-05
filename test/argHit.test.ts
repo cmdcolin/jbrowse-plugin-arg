@@ -61,6 +61,7 @@ const block: RenderBlock = {
 }
 
 const state: ArgRenderState = {
+  draw: 'trees',
   canvasWidth: 400,
   canvasHeight: 100,
   maxTime: 3,

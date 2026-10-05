@@ -12,7 +12,7 @@ import { fetchEachRegion } from '@jbrowse/display-kit/fetchEachRegion'
 import { types } from '@jbrowse/mobx-state-tree'
 import { installUpload } from '@jbrowse/render-core/installUpload'
 
-import { dendrogramPx, toTimeScale } from './components/argTypes.ts'
+import { dendrogramPx, toArgDraw, toTimeScale } from './components/argTypes.ts'
 import { findArgHit, sameArgHit } from './components/findArgHit.ts'
 import { populationColor } from './components/palette.ts'
 import { layoutTreeCells } from './components/treeCells.ts'
@@ -124,7 +124,13 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
        * color, so at that zoom no branch carries a population and a legend
        * would be advertising an encoding that is not on screen.
        */
+      get draw() {
+        return toArgDraw(getConf(self, 'draw'))
+      },
       get hasDendrogram() {
+        if (this.draw === 'tmrca') {
+          return false
+        }
         const minWidthBp =
           dendrogramPx(self.numSamples, getConf(self, 'pxPerLeaf')) *
           self.view.bpPerPx
@@ -168,6 +174,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
     .views(self => ({
       get renderState(): ArgRenderState {
         return {
+          draw: self.draw,
           canvasWidth: self.canvasWidthPx,
           canvasHeight: self.height,
           maxTime: self.maxTime,
@@ -202,6 +209,7 @@ export function modelFactory(configSchema: LinearArgDisplayConfigModel) {
           return [
             ...superTrackMenuItems(),
             ...buildArgTrackMenuItems({
+              draw: self.draw,
               timeScale: toTimeScale(getConf(self, 'timeScale')),
               colorByPopulation: getConf(self, 'colorBy') === 'population',
               showMutations: getConf(self, 'showMutations'),

@@ -32,7 +32,19 @@ export const configSchema = ConfigurationSchema(
       type: 'color',
       defaultValue: '#c33',
       description:
-        'color of the TMRCA line drawn when a region holds too many trees to draw',
+        'color of the TMRCA line',
+    },
+    /**
+     * #slot
+     * `both` draws the TMRCA line under every tree, so the signal runs the
+     * whole way and dendrograms sit on it where they fit. `trees` draws the
+     * line only for trees too narrow to draw. `tmrca` draws no dendrograms.
+     */
+    draw: {
+      type: 'stringEnum',
+      model: types.enumeration('ArgDraw', ['both', 'trees', 'tmrca']),
+      defaultValue: 'both',
+      description: 'draw the trees, the TMRCA line, or both',
     },
     /**
      * #slot

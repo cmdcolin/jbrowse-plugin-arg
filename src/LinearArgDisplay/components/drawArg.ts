@@ -26,6 +26,16 @@ export interface ScreenCell {
   treeRight: number
 }
 
+function treesWithGenealogy(data: ArgRegionData) {
+  const trees: number[] = []
+  for (let i = 0; i < data.numTrees; i++) {
+    if (data.edgeCount[i]! > 0) {
+      trees.push(i)
+    }
+  }
+  return trees
+}
+
 /**
  * The trees of one block in screen pixels: the dendrogram cells, and the
  * trees too narrow for one, which draw as their TMRCA. The painters and the hit
@@ -34,17 +44,20 @@ export interface ScreenCell {
 export function screenCells(
   data: ArgRegionData,
   block: RenderBlock,
-  state: Pick<ArgRenderState, 'numSamples' | 'pxPerLeaf'>,
+  state: Pick<ArgRenderState, 'numSamples' | 'pxPerLeaf' | 'draw'>,
 ) {
   const { start, end, screenStartPx, screenEndPx, reversed } = block
   const toPx = (bp: number) =>
     bpToScreenPx(bp, start, end, screenStartPx, screenEndPx, reversed)
   const bpPerPx = (end - start) / Math.abs(screenEndPx - screenStartPx)
   const minWidthBp = dendrogramPx(state.numSamples, state.pxPerLeaf) * bpPerPx
-  const { cells, collapsed } = layoutTreeCells(data, minWidthBp)
+  const layout = layoutTreeCells(data, minWidthBp)
+  const cells = state.draw === 'tmrca' ? [] : layout.cells
+  const skyline =
+    state.draw === 'trees' ? layout.collapsed : treesWithGenealogy(data)
   return {
     toPx,
-    collapsed,
+    skyline,
     cells: cells.map(cell => {
       const a = toPx(cell.start)
       const b = toPx(cell.end)
@@ -237,13 +250,13 @@ export function drawArgBlocks(
     canvasHeight,
     block => regions.get(block.displayedRegionIndex),
     (data, block) => {
-      const { toPx, cells, collapsed } = screenCells(data, block, state)
+      const { toPx, cells, skyline } = screenCells(data, block, state)
 
       ctx.strokeStyle = skylineColor
       ctx.lineWidth = 1
       ctx.beginPath()
       let previous = -2
-      for (const i of collapsed) {
+      for (const i of skyline) {
         const from = toPx(data.treeStart[i]!)
         const top = y(data.tmrca[i]!)
         if (i === previous + 1) {

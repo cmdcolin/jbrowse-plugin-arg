@@ -1,6 +1,8 @@
+import type { ArgDraw } from './components/argTypes.ts'
 import type { MenuItem } from '@jbrowse/core/ui/menuItems'
 
 interface ArgMenuSelf {
+  draw: ArgDraw
   timeScale: 'linear' | 'log'
   colorByPopulation: boolean
   showMutations: boolean
@@ -15,7 +17,23 @@ interface ArgMenuSelf {
  * which the hosts this plugin supports do not all re-export.
  */
 export function buildArgTrackMenuItems(self: ArgMenuSelf): MenuItem[] {
+  const drawChoices: [ArgDraw, string][] = [
+    ['both', 'Trees and TMRCA line'],
+    ['trees', 'Trees'],
+    ['tmrca', 'TMRCA line'],
+  ]
   return [
+    {
+      label: 'Draw',
+      subMenu: drawChoices.map(([value, label]) => ({
+        label,
+        type: 'radio' as const,
+        checked: self.draw === value,
+        onClick: () => {
+          self.setSetting('draw', value)
+        },
+      })),
+    },
     {
       label: 'Log time scale',
       type: 'checkbox',
