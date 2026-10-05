@@ -83,7 +83,7 @@ const figures = [
   },
   {
     name: 'prnp',
-    config: `${BASE}/demo.config.json`,
+    config: `${BASE}/demo-calm.config.json`,
     assembly: 'hg38',
     loc: 'chr20:4,689,000-4,693,000',
     tracks: ['genes', 'prnp_arg', 'prnp_variants'],
@@ -142,7 +142,18 @@ async function serve() {
       plugin.umdUrl = PLUGIN_URL
     }
   }
-  const generated = { '/demo.config.json': JSON.stringify(demo) }
+  const calm = structuredClone(demo)
+  for (const track of calm.tracks) {
+    for (const display of track.displays ?? []) {
+      if (display.type === 'LinearArgDisplay') {
+        display.showMutations = false
+      }
+    }
+  }
+  const generated = {
+    '/demo.config.json': JSON.stringify(demo),
+    '/demo-calm.config.json': JSON.stringify(calm),
+  }
   const server = http.createServer((req, res) => {
     const headers = {
       'Access-Control-Allow-Origin': '*',
