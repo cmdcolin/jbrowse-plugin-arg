@@ -53,7 +53,7 @@ clustering, the legend, tooltips and SVG export come from core:
     {
       "type": "LinearMultiRowFeatureDisplay",
       "displayId": "my_painting-LinearMultiRowFeatureDisplay",
-      "partitionField": "row",
+      "rows": { "field": "row" },
       "color": "jexl:get(feature,'color')"
     }
   ]
