@@ -64,31 +64,29 @@
         {
           "type": "LinearMultiRowFeatureDisplay",
           "displayId": "introgression_painting-LinearMultiRowFeatureDisplay",
-          "rows": { "field": "row" },
-          "color": "jexl:get(feature,'color')",
+          "rows": "row",
           "height": 280,
           "rowGroups": [
             {
               "match": "^A ",
-              "group": "A",
-              "color": "#0072b2"
+              "group": "A"
             },
             {
               "match": "^B ",
-              "group": "B",
-              "color": "#e69f00"
+              "group": "B"
             }
           ],
-          "legend": [
-            {
-              "label": "relatives mostly A",
-              "color": "#0072b2"
-            },
-            {
-              "label": "relatives mostly B",
-              "color": "#e69f00"
-            }
-          ]
+          "rowColor": {
+            "field": "group",
+            "domain": ["A", "B"],
+            "range": ["#0072b2", "#e69f00"]
+          },
+          "color": {
+            "value": "jexl:get(feature,'color')",
+            "scale": "identity",
+            "domain": ["#0072b2", "#e69f00"],
+            "labels": ["relatives mostly A", "relatives mostly B"]
+          }
         }
       ]
     }
